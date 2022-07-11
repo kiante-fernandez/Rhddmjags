@@ -19,7 +19,8 @@
 #
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
-# 06/07/22      Kianté  Fernandez                 Rewrote Michael python code in R
+# 06/07/22      Kianté  Fernandez                 Rewrote python code for generate data
+# 11/07/22      Kianté  Fernandez                 started Jaggs code Recoding
 
 
 # Libraries
@@ -30,26 +31,24 @@ library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
 library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
-source("Rhddmjagsutils.R")
+source(here("R","Rhddmjagsutils.R"))
 
 ### Simulations ###
 
 # Generate samples from the joint-model of reaction time and choice
 #Note you could remove this if statement and replace with loading your own data "gendata"
-if (!file.exists(here('data','genparam_test4.mat'))) {
-  # create a new sub directory inside
-  # the main path
-  dir.create(file.path(main_dir, sub_dir))
-  
-  # specifying the working directory
-  setwd(file.path(main_dir, sub_dir))
+
+if (!file.exists(here('data','genparam_test.RData'))) {
   
   # Number of simulated participants
-  nparts <- 40
+  nparts <- 10
+  
   # Number of conditions
   nconds <-  6
+  
   # Number of trials per participant and condition
   ntrials <-  50
+  
   # Number of total trials in each simulation
   N <-  ntrials*nparts*nconds
   
@@ -78,17 +77,42 @@ if (!file.exists(here('data','genparam_test4.mat'))) {
       tempt <- abs(Re(tempout))
       y[indextrack] <- tempx*tempt
       rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx + 1)/2
-      participant[indextrack] <- p + 1
-      condition[indextrack] <- k + 1
+      acc[indextrack] <- (tempx + 1)/2 #do you need this 1 here?
+      participant[indextrack] <- p
+      condition[indextrack] <- k 
       indextrack <- indextrack + ntrials
+      
   }
   } 
+  
+  genparam <- vector(mode = "list")
+  genparam$ndt <- ndt
+  genparam$beta <-  beta
+  genparam$alpha <-  alpha
+  genparam$delta <-  delta
+  genparam$ndttrialrange <-  ndttrialrange
+  genparam$deltatrialsd <-  deltatrialsd
+  genparam$rt <- rt
+  genparam$acc <-  acc
+  genparam$y <-  y
+  genparam$participant <-  participant
+  genparam$condition <-  condition
+  genparam$nparts <-  nparts
+  genparam$nconds <-  nconds
+  genparam$ntrials <-  ntrials
+  genparam$N <-  N
+  save(genparam, file = here("data", "genparam_test.RData"))
+  
 } else {
-  # specifying the working directory 
-  setwd(file.path(main_dir, sub_dir))
   #load dataset
+  load(here("data", "genparam_test.RData"))
 }
+
+# JAGS code
+
+# Set random seed
+set.seed(2022)
+
 
     
 

@@ -15,7 +15,7 @@ Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS
 
 [Program: JAGS Wiener module](https://sourceforge.net/projects/jags-wiener/)
 
-[R Packages: ](), can use the following to install the required packages:
+[R Packages: ]() can use the following to install the required packages:
 
 ```bash
 install.packages()
