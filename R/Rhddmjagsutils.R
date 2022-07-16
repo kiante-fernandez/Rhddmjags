@@ -31,7 +31,8 @@ library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
 library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
-
+library(ggstar)
+library(coda)
 
 ### Functions ###
 
@@ -122,7 +123,7 @@ simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5,
   result <- rts * choice
   return(result)
 }
-simul_ratcliff_slow() # works?
+# simul_ratcliff_slow() # works?
 
 # Simulate diffusion models quickly with intrinsic trial-to-trial variability in parameters
 simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, rangeTau = 0, rangeBeta = 0, Eta = .3, Varsigma = 1) {
@@ -263,8 +264,10 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   return(result)
 }
 
-simulratcliff() # works?
+# simulratcliff() # works?
 
+
+## NEED TO RETURN TO THIS A WRITE IT OUT, JUST LIKE ABOVE
 simuldiff2ndt <- function(N = 100, Alpha = 1, Vet = .2, Rmr = .2, Nu = 1, Zeta = None, rangeVet = 0, rangeRmr = 0, rangeZeta = 0, Eta = .3, Varsigma = 1) {
   #   SIMULDIFF2NDT  Generates data according to a diffusion model with non-decision time split into two parts with independent variance
   #
@@ -325,4 +328,171 @@ simuldiff2ndt <- function(N = 100, Alpha = 1, Vet = .2, Rmr = .2, Nu = 1, Zeta =
   # Converted from simuldiff.m MATLAB script by Joachim Vandekerckhove.
   # Then, converted from pyhddmjagsutils.py Python script by Kianté Fernandez
   # See also http://ppw.kuleuven.be/okp/dmatoolbox.
+}
+
+diagnostic <- function(insamples) {
+  insamples <- samps # for testing
+
+  # Returns two versions of Rhat (measure of convergence, less is better with an approximate
+  # 1.10 cutoff) and Neff, number of effective samples). Note that 'rhat' is more diagnostic than 'oldrhat' according to
+  # Gelman et al. (2014).
+  #
+  # Reference for preferred Rhat calculation (split chains) and number of effective sample calculation:
+  #     Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A. & Rubin, D. B. (2014).
+  #     Bayesian data analysis (Third Edition). CRC Press:
+  #     Boca Raton, FL
+  #
+  # Reference for original Rhat calculation:
+  #     Gelman, A., Carlin, J., Stern, H., & Rubin D., (2004).
+  #     Bayesian Data Analysis (Second Edition). Chapman & Hall/CRC:
+  #     Boca Raton, FL.
+  #
+  # Parameters
+  # ----------
+  # insamples: array
+  # Sampled values of monitored variables as an array of size
+  #  variable by dim_1, dim_n, iterations, chains
+  # dim_1, ..., dim_n describe the shape of variable in JAGS model.
+  #
+  # Returns
+  # -------
+  # list:
+  #     rhat, oldrhat, neff, posterior mean, and posterior std for each variable. Prints maximum Rhat and minimum Neff across all variables
+
+  result <- list()
+
+  maxrhatsold <- rep(0, length(attributes(insamples)$dimnames$var))
+  maxrhatsnew <- rep(0, length(attributes(insamples)$dimnames$var))
+  minneff <- rep(0, length(attributes(insamples)$dimnames$var))
+
+  var_rec <- table(factor(gsub("\\[|\\]|[0-9]+", "", attributes(insamples)$dimnames$var)))
+  keys <- names(var_rec)
+  var_order <- factor(gsub("\\[|\\]|[0-9]+", "", attributes(insamples)$dimnames$var))
+
+  var_order[var_order == keys[1]]
+
+  for (key_idx in seq_len(length(keys))) {
+    result[[key_idx]] <- list()
+
+    possamps <- insamples[, which(var_order == keys[key_idx]), ]
+    dim(possamps)
+    # Number of chains
+    nchains <- dim(possamps)[[3]]
+
+    # Number of samples per chain
+    nsamps <- dim(possamps)[[1]]
+
+    # Number of variables per key
+    nvars <- dim(possamps)[[2]]
+
+    # Reshape data
+    allsamps <- apply(possamps, 1, c)
+    dim(allsamps)
+
+    # Reshape data to preduce R_hatnew
+    possampsnew <- array(0, c(nvars, nsamps / 2, nchains * 2))
+    newc <- 1
+    dim(possamps)
+    dim(possampsnew)
+    for (chain_idx in seq_len(nchains)) {
+      # possampsnew[,,newc] = (((possamps,seq_len(nsamps/2),axis=-2),chain_idx
+      # possampsnew[,,newc + ] = (((possamps,seq_len(nsamps/2),axis=-2),chain_idx)
+      # this needs to be checked
+      possampsnew[, , newc] <- possamps[seq_len(nsamps / 2), , 1]
+      possampsnew[, , newc + 1] <- possamps[seq_len(nsamps / 2), , 1]
+      newc <- newc + 1
+
+      # Index of variables
+      varindx <- which(var_order == keys[key_idx])
+
+      # Reshape data (all aperm not working?)
+      # alldata <-  aperm(possamps, c(nvars, nsamps, nchains))
+
+      # Mean of each chain for rhat
+      chainmeans <- apply(possamps, 3, mean)
+      # Mean of each chain for rhatnew
+      chainmeansnew <- apply(possampsnew, 3, mean)
+      # Global mean of each parameter for rhat
+      globalmean <- mean(chainmeans)
+      globalmeannew <- mean(chainmeansnew)
+      result[[1]]$mean <- globalmean
+      result[[1]]$std <- apply(allsamps, 1, std)
+    }
+  }
+}
+
+jellyfish <- function(samples, parameter, filename = NULL) {
+  #   Plots posterior distributions of given posterior samples in a jellyfish
+  #   plot. Jellyfish plots are posterior distributions (mirrored over their
+  #   horizontal axes) with 99% and 95% credible intervals (currently plotted
+  #   from the .5% and 99.5% & 2.5% and 97.5% percentiles respectively.
+  #   Also plotted are the median, mode, and mean of the posterior distributions"
+  #
+  # Parameters
+  # ----------
+  # samples the rjags object
+  # parameter: a string with the parameter of interest
+  # optional file location to save the plot
+  #
+  # for calculating the highest density point (mode) per parameter
+  highestdensity <- function(v) {
+    temp_idx <- which.max(density(as.numeric(v))[["y"]])
+    density(as.numeric(v))[["x"]][temp_idx]
+  }
+  ## if sample_dat  is the model output from R2jags
+  sample_dat <- as.data.frame(as.matrix(as.mcmc(samples)))
+
+  ## name your predicted factor latent.mean, and the CI between latent.lower and latent.upper
+  post_mean <- apply(sample_dat, 2, mean)
+  post_median <- apply(sample_dat, 2, median)
+  post_mode <- apply(sample_dat, 2, highestdensity)
+  # get the intervals
+  post_lower1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.025)))
+  post_upper1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.975)))
+  post_lower2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.005)))
+  post_upper2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.995)))
+  # get parameter names
+  subject <- colnames(sample_dat)
+  # create data frame of statistics to plot
+  dat <- data.frame(post_mean, post_median, post_mode, post_lower1, post_upper1, post_lower2, post_upper2, subject)
+  # remove white space and symbols for indexing
+  var_order <- factor(gsub("[[:punct:]]", "", gsub("\\[|\\]|[0-9]+", "", rownames(dat))))
+  # select the parameters of interest to plot:
+  plt_data <- dat[which(var_order == parameter), ]
+  # order the data by the posterior MAPS, for better visualization
+  plt_data <- plt_data[order(plt_data$post_mean), ]
+  # order the observation IDs
+  plt_data$subject2 <- reorder(plt_data$subject, plt_data$post_mean)
+  # get the title of the plot
+  title <- paste0("Posterior distributions of ", parameter, " parameter")
+  # make plot using the ggplot:
+  # orange square (mode)
+  # black circle (median)
+  # cyan star (mean)
+  jellyplot <- ggplot(plt_data, aes(x = post_mean, y = subject2)) +
+    geom_segment(aes(x = post_lower2, xend = post_upper2, y = subject2, yend = subject2), color = "cyan2", size = 1) +
+    geom_segment(aes(x = post_lower1, xend = post_upper1, y = subject2, yend = subject2), color = "blue", size = 2) +
+    geom_point(aes(x = post_mode), color = "darkorange", shape = 15, size = 3) +
+    geom_point(aes(x = post_median), color = "black", shape = 16, size = 4) +
+    ggstar::geom_star(color = "cyan2", fill = "cyan2", size = 3) +
+    labs(title = title, x = "", y = "") +
+    theme_classic()
+
+  if (!is.null(filename)) {
+    jellyplot
+    ggsave(filename, dpi = 300)
+  }
+  return(jellyplot)
+}
+
+rsquared_pred <- function(trueval, predval) {
+  # RSQUARED_PRED  Calculates R^2_prediction for data and statistics derived from data
+  divisor <- sum(is.infinite(trueval)) - 1
+  # Mean squared error of prediction
+  MSEP <- sum((trueval - predval)^2) / divisor
+  # Variance estimate of the true values
+  vartrue <- sum((trueval - mean(trueval, na.rm = T))^2) / divisor
+  # R-squared definition
+  rsquared <- 1 - (MSEP / vartrue)
+  return(rsquared)
 }

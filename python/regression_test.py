@@ -46,13 +46,13 @@ import pyhddmjagsutils as phju
 if not os.path.exists('data/genparam_test3.mat'):
 
     # Number of simulated participants
-    nparts = 40
+    nparts = 10
 
     # Number of conditions
-    nconds = 6
+    nconds = 3
 
     # Number of trials per participant and condition
-    ntrials = 50
+    ntrials = 10
 
     # Number of total trials in each simulation
     N = ntrials*nparts*nconds
@@ -96,7 +96,7 @@ if not os.path.exists('data/genparam_test3.mat'):
             tempt = np.abs(np.real(tempout))
             mindwanderx = np.random.randint(low=0,high=2,size=ntrials)*2 -1
             mindwandert = np.random.uniform(low=0,high=2,size=ntrials) # Randomly distributed from 0 to 2 seconds
-
+ 
             mindwander_trials = np.random.choice(ntrials, size=np.int(np.round(ntrials*(prob_lapse[p]/100))), replace=False)
             tempx[mindwander_trials] = mindwanderx[mindwander_trials]
             tempt[mindwander_trials] = mindwandert[mindwander_trials]

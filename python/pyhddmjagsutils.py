@@ -105,9 +105,7 @@ def simul_ratcliff_slow(N=100, Alpha=1, Tau=.4, Nu=1, Beta=.5, rangeTau=0, range
         drift = stats.norm.rvs(loc=Nu, scale=Eta)
         random_walk[0] = start_point*Alpha
         for s in range(1,nsteps):
-            random_walk[s] = random_walk[s-1] + 
-                stats.norm.rvs(loc=drift*step_length, 
-                    scale=Varsigma*np.sqrt(step_length))
+            random_walk[s] = random_walk[s-1] + stats.norm.rvs(loc=drift*step_length, scale=Varsigma*np.sqrt(step_length))
             if random_walk[s] >= Alpha:
                 random_walk[s:] = Alpha
                 rts[n] = s*step_length + ndt

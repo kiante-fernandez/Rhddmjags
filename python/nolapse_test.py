@@ -41,13 +41,13 @@ import pyhddmjagsutils as phju
 
 if not os.path.exists('data/genparam_test4.mat'):
     # Number of simulated participants
-    nparts = 40
+    nparts = 10
 
     # Number of conditions
-    nconds = 6
+    nconds = 4
 
     # Number of trials per participant and condition
-    ntrials = 50
+    ntrials = 100
 
     # Number of total trials in each simulation
     N = ntrials*nparts*nconds
@@ -194,9 +194,9 @@ pyjags.modules.load_module('wiener')
 pyjags.modules.load_module('dic')
 pyjags.modules.list_modules()
 
-nchains = 6
-burnin = 2000  # Note that scientific notation breaks pyjags
-nsamps = 10000
+nchains = 3
+burnin = 250  # Note that scientific notation breaks pyjags
+nsamps = 5000
 
 modelfile = 'jagscode/nolapse_test4.jags'
 f = open(modelfile, 'w')

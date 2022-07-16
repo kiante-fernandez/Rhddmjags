@@ -20,7 +20,8 @@
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
 # 06/07/22      Kianté  Fernandez                 Rewrote python code for generate data
-# 11/07/22      Kianté  Fernandez                 started Jaggs code Recoding
+# 11/07/22      Kianté  Fernandez                 started Jags code Re-coding
+# 13/07/22      Kianté  Fernandez                 fixed the initialization of chains lists
 
 
 # Libraries
@@ -33,81 +34,81 @@ library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags
 library(R2jags) # jags.parallel is part of R2jags
 
-source(here("R","Rhddmjagsutils.R"))
+source(here("R", "Rhddmjagsutils.R"))
 
 
 ### Simulations ###
 
 # Generate samples from the joint-model of reaction time and choice
-#Note you could remove this if statement and replace with loading your own data "gendata"
+# Note you could remove this if statement and replace with loading your own data "gendata"
 
-if (!file.exists(here('data','genparam_test.RData'))) {
-  
+if (!file.exists(here("data", "genparam_test.RData"))) {
+
   # Number of simulated participants
   nparts <- 10
-  
+
   # Number of conditions
-  nconds <-  3
-  
+  nconds <- 4
+
   # Number of trials per participant and condition
-  ntrials <-  10
-  
+  ntrials <- 100
+
   # Number of total trials in each simulation
-  N <-  ntrials*nparts*nconds
-  
+  N <- ntrials * nparts * nconds
+
   # Set random seed
   set.seed(2022)
-  
-  ndt   <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
+
+  ndt <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
   alpha <- runif(nparts, .8, 1.4) # Uniform from .8 to 1.4 evidence units
-  beta  <- runif(nparts, .3, .7) # Uniform from .3 to .7 * alpha
-  delta <- matrix(runif(nparts*nconds,-4, 4), nrow = nparts, ncol = nconds) # Uniform from -4 to 4 evidence units per second
-  ndttrialrange <- runif(n = nparts, 0,.1) # Uniform from 0 to .1 seconds
-  deltatrialsd <- runif(n = nparts, 0,2) # Uniform from 0 to 2 evidence units per second
-  y <-  rep(0,N)
-  rt <-   rep(0,N)
-  acc <-   rep(0,N)
-  participant <-  rep(0,N) #Participant index
-  condition <-  rep(0,N) #Condition index
-  indextrack <-  seq_len(ntrials)
-  
-  for (p in seq_len(nparts)){
-    for (k in seq_len(nconds)){
-      #tempout <- simulratcliff() # for testing
-      tempout <- simulratcliff(N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
-                               Nu = delta[[p,k]], Eta = deltatrialsd[[p]], rangeTau = ndttrialrange[[p]])
+  beta <- runif(nparts, .3, .7) # Uniform from .3 to .7 * alpha
+  delta <- matrix(runif(nparts * nconds, -4, 4), nrow = nparts, ncol = nconds) # Uniform from -4 to 4 evidence units per second
+  ndttrialrange <- runif(n = nparts, 0, .1) # Uniform from 0 to .1 seconds
+  deltatrialsd <- runif(n = nparts, 0, 2) # Uniform from 0 to 2 evidence units per second
+  y <- rep(0, N)
+  rt <- rep(0, N)
+  acc <- rep(0, N)
+  participant <- rep(0, N) # Participant index
+  condition <- rep(0, N) # Condition index
+  indextrack <- seq_len(ntrials)
+
+  for (p in seq_len(nparts)) {
+    for (k in seq_len(nconds)) {
+      # tempout <- simulratcliff() # for testing
+      tempout <- simulratcliff(
+        N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
+        Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = ndttrialrange[[p]]
+      )
       tempx <- sign(Re(tempout))
       tempt <- abs(Re(tempout))
-      y[indextrack] <- tempx*tempt
+      y[indextrack] <- tempx * tempt
       rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx + 1)/2 #do you need this 1 here?
+      acc[indextrack] <- (tempx) / 2 # do you need this 1 here?
       participant[indextrack] <- p
-      condition[indextrack] <- k 
+      condition[indextrack] <- k
       indextrack <- indextrack + ntrials
-      
+    }
   }
-  } 
-  
+
   genparam <- vector(mode = "list")
   genparam$ndt <- ndt
-  genparam$beta <-  beta
-  genparam$alpha <-  alpha
-  genparam$delta <-  delta
-  genparam$ndttrialrange <-  ndttrialrange
-  genparam$deltatrialsd <-  deltatrialsd
+  genparam$beta <- beta
+  genparam$alpha <- alpha
+  genparam$delta <- delta
+  genparam$ndttrialrange <- ndttrialrange
+  genparam$deltatrialsd <- deltatrialsd
   genparam$rt <- rt
-  genparam$acc <-  acc
-  genparam$y <-  y
-  genparam$participant <-  participant
-  genparam$condition <-  condition
-  genparam$nparts <-  nparts
-  genparam$nconds <-  nconds
-  genparam$ntrials <-  ntrials
-  genparam$N <-  N
+  genparam$acc <- acc
+  genparam$y <- y
+  genparam$participant <- participant
+  genparam$condition <- condition
+  genparam$nparts <- nparts
+  genparam$nconds <- nconds
+  genparam$ntrials <- ntrials
+  genparam$N <- N
   save(genparam, file = here("data", "genparam_test.RData"))
-  
 } else {
-  #load dataset
+  # load dataset
   load(here("data", "genparam_test.RData"))
 }
 
@@ -117,9 +118,9 @@ if (!file.exists(here('data','genparam_test.RData'))) {
 set.seed(2022)
 
 
-tojags = "
+tojags <- "
 model {
-    
+
     ##########
     #Between-condition variability parameters priors
     ##########
@@ -202,49 +203,50 @@ list.modules()
 
 writeLines(tojags, here("jagscode", "nolapse_test.jags"))
 
-nchains = 2
-burnin = 20
-nsamps = 100
+nchains <- 3
+burnin <- 250
+nsamps <- 5000
 
-modelfile = here('jagscode','nolapse_test4.jags')
+modelfile <- here("jagscode", "nolapse_test4.jags")
 
 # Track these variables
-jags_params = c('deltasdcond', 
-             'tersd', 'alphasd', 'betasd', 'deltasd',
-             'terhier', 'alphahier', 'betahier', 'deltahier',
-             'ter', 'alpha', 'beta', 'deltapart',
-             'delta')
+jags_params <- c(
+  "deltasdcond",
+  "tersd", "alphasd", "betasd", "deltasd",
+  "terhier", "alphahier", "betahier", "deltahier",
+  "ter", "alpha", "beta", "deltapart",
+  "delta"
+)
 
-N <-  genparam$N
-
-#Fit model to data
+# Fit model to data
 y <- genparam$y
 rt <- genparam$rt
-participant <-genparam$participant
+participant <- genparam$participant
 condition <- genparam$condition
-nparts <-  genparam$nparts
+nparts <- genparam$nparts
 nconds <- genparam$nconds
-ntrials <-  genparam$ntrials
+ntrials <- genparam$ntrials
+N <- genparam$N
 
-minrt <-  rep(0,nparts)
+minrt <- rep(0, nparts)
 
 datalist <- list(
-  y <-  y,
-  N <-  N,
+  y <- y,
+  N <- N,
   nparts <- nparts,
   nconds <- nconds,
   condition <- condition,
   participant <- participant
-) 
-for (p in seq_len(nparts)){
+)
+for (p in seq_len(nparts)) {
   minrt[[p]] <- min(rt[(participant == p)])
 }
-#get names for the list
-names(datalist) <- c("y", "N", "nparts","nconds","condition","participant")
+# get names for the list
+names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant")
 
 initials <- vector(mode = "list")
-for (c in seq_len(nchains)){
-  initsList = function() {
+for (c in seq_len(nchains)) {
+  initsList <- function() {
     chaininit <- vector(mode = "list")
     chaininit$deltasdcond <- runif(n = 1, .1, 3)
     chaininit$tersd <- runif(1, .01, .2)
@@ -253,38 +255,48 @@ for (c in seq_len(nchains)){
     chaininit$deltasd <- runif(1, .1, 3)
     chaininit$deltapart <- runif(nparts, -4., 4.)
     chaininit$delta <- matrix(runif(nparts * nconds, -4., 4.), nrow = nparts, ncol = nconds)
-    chaininit$ter <-  runif(nparts, .1, .5)
+    chaininit$ter <- runif(nparts, .1, .5)
     chaininit$alpha <- runif(nparts, .5, 2.)
-    chaininit$beta <-  runif(nparts, .2, .8)
+    chaininit$beta <- runif(nparts, .2, .8)
     chaininit$deltahier <- runif(1, -4., 4.)
     chaininit$terhier <- runif(1, .1, .5)
     chaininit$alphahier <- runif(1, .5, 2.)
     chaininit$betahier <- runif(1, .2, .8)
-    for (p in seq_len(nparts)){
-      chaininit$ter[[p]] <- runif(1, 0, minrt[[p]]/2)
+    for (p in seq_len(nparts)) {
+      chaininit$ter[[p]] <- runif(1, 0, minrt[[p]] / 2)
     }
     return(chaininit)
   }
   initials[[c]] <- initsList()
 }
 
-print(paste0('Fitting ','nolapse',' model ...'))
+print(paste0("Fitting ", "nolapse", " model ..."))
 
-jagsfit <- jags(model.file=modelfile, 
-                data=datalist, inits=initials, jags_params,
-                n.iter=nsamps, 
-                n.chains = nchains,
-                n.burnin = burnin, jags.module = "wiener")
+jagsfit <- R2jags::jags(
+  model.file = modelfile,
+  data = datalist, inits = initials, jags_params,
+  n.iter = nsamps,
+  n.chains = nchains,
+  n.burnin = burnin, jags.module = "wiener"
+)
+# Parallel?
+# jagsfit_p <- jags.parallel(
+#   model.file = modelfile,
+#   data = datalist, inits = initials, jags_params,
+#   n.iter = nsamps,
+#   n.chains = nchains,
+#   n.burnin = burnin, jags.module = "wiener"
+# )
 
-samples <- update(jagsfit, n.iter=nsamps)
+samples <- update(jagsfit, n.iter = nsamps)
 
-savestring = here("modelfits", "genparam_test4_nolapse.Rdata")
+samps<-coda::as.array.mcmc.list(as.mcmc(samples), drop = T)
+
+savestring <- here("modelfits", "genparam_test4_nolapse.Rdata")
 print(paste0("Saving results to: ", savestring))
 
 save(samples, file = savestring)
 
-#Diagnostics
+# Diagnostics
 
-#Posterior distributions
-
-
+# Posterior distributions
