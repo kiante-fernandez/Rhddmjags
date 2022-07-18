@@ -1,4 +1,4 @@
-## JAGS and JAGS-WIENER installation steps on Ubuntu
+## JAGS and JAGS-WIENER installation steps for OS
 
 #### 1. Install JAGS:
 
@@ -7,24 +7,7 @@ sudo apt-get update
 sudo apt-get install jags
 ```
 
-#### 2. Install precompiled JAGS-WIENER for debian. If this works go to step 5.
-
-This step has been tested on Ubuntu 18.04 LTS, Ubuntu 20.04 LTS and Ubuntu 18.04 LTS for Windows Subsystem Linux (WSL). This step will likely work for other Ubuntu distributions and may work for some other debian distributions.
-
-```bash
-TEMP_DEB="$(mktemp)"
-wget -O "$TEMP_DEB" "https://launchpad.net/~cidlab/+archive/ubuntu/jwm/+files/jags-wiener-module_1.1-5_amd64.deb"
-sudo dpkg -i "$TEMP_DEB"
-rm -f "$TEMP_DEB"
-```
-
-#### 3. If step 2 doesn't work, install dependencies for JAGS-WIENER
-
-```bash
-sudo apt-get install autoconf automake libtool g++
-```
-
-#### 4. If step 2 doesn't work and step 3 completed successfully, download and install JAGS-WIENER
+#### 2. download and install JAGS-WIENER
 
 ```bash
 cd ~
@@ -57,22 +40,16 @@ For instance, if the result is ”/usr/lib/local/JAGS/modules-4/dic.la” Then I
 ./configure --prefix=/usr/lib/local
 ```
 
-#### 5. Test installation (last three commands will be within JAGS terminal):
+#### 5. Test installation (last three commands will be within the R terminal):
 
 ```bash
 jags
 ```
 ```
-load dic
-load wiener
-exit
+load.module("wiener")
+load.module("dic")
+list.modules()
 ```
 
 A successful installation of JAGS should load the modules: basemod “ok”, bugs “ok”, and dic “ok”. A successful installation of JAGS-WIENER that is found by JAGS will load wiener “ok”.
 
-#### 6. (Optional) Install pyjags and dependencies (after installing Anaconda Python):
-
-```bash
-sudo apt-get install pkg-config
-pip install pyjags
-```

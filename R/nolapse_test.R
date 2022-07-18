@@ -1,4 +1,4 @@
-# nolapse_test.py - Testing JAGS fits of HDDM models without lapse process in JAGS using Rjags in R
+# nolapse_test.R - Testing JAGS fits of HDDM models without lapse process in JAGS using R2jags in R
 #
 # Copyright (C) 2022 Kianté Fernandez, <kiantefernan@gmail.com>
 #

@@ -3,7 +3,7 @@
 
 Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS in R
 
-**This code i based on Michael D. Nunez's Repo `pyhddmjags`**
+**This code is based on Michael D. Nunez's Repo [`pyhddmjags`](https://github.com/mdnunez/pyhddmjags)**
 
 ### Prerequisites
 
@@ -18,7 +18,8 @@ Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS
 [R Packages: ]() can use the following to install the required packages:
 
 ```bash
-install.packages()
+install.packages(c("dplyr", "tidyr", "readr", "magrittr", "ggplot2","here","R2jags","ggstar","coda"))
+
 ```
 
 ### Downloading
