@@ -69,6 +69,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       )
       tempx <- sign(Re(tempout))
       tempt <- abs(Re(tempout))
+      CPP[indextrack] <- rnorm(ntrials, delta[[p]],CPPnoise[[p]])
       y[indextrack] <- tempx * tempt
       rt[indextrack] <- tempt
       acc[indextrack] <- (tempx) / 2
