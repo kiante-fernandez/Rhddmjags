@@ -281,6 +281,23 @@ print(paste0("Saving results to: ", savestring))
 save(samps, file = savestring)
 
 # Diagnostics
+#for now just call the jags object Diagnostics() function soon to come!
+samples
 
 # Posterior distributions
+jellyfish(samples, "delta")
 
+jellyfish(samples, "ter")
+
+jellyfish(samples, "beta")
+
+jellyfish(samples, "alpha")
+
+#Recovery
+recovery(samples, genparam["delta"])
+
+recovery(samples, genparam["ter"])
+
+recovery(samples, genparam["beta"])
+
+recovery(samples, genparam["alpha"])

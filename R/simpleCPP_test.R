@@ -221,7 +221,8 @@ print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 # Diagnostics
-
+#for now just call the jags object Diagnostics() function soon to come!
+samples
 # Posterior distributions
 jellyfish(samples, "alpha")
 
@@ -266,4 +267,6 @@ p5 <- recovery(samples, genparam["CPPnoise"])
 p5 <- p5 + labs(x = "Simulated \U03C3 (\u03bcV/sec)",
                 y = "Posterior of \U03C3 (\u03bcV/sec)")
 
-p1 / (p2 + p3)/(p4 + p5)
+p1 / (p2 + p3)/(p4 + p5) 
+ggsave(here("figures","All_recovery_simpleCPP.png"), dpi = 300)
+
