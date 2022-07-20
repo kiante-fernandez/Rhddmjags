@@ -127,7 +127,6 @@ simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5,
   result <- rts * choice
   return(result)
 }
-# simul_ratcliff_slow() # works?
 
 # Simulate diffusion models quickly with intrinsic trial-to-trial variability in parameters
 simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, rangeTau = 0, rangeBeta = 0, Eta = .3, Varsigma = 1) {
@@ -268,9 +267,8 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   return(result)
 }
 
-# simulratcliff() # works?
-
 diagnostic <- function(insamples) {
+  # THIS FUNCTION IS NOT DONE NOR WORKING YET, USING IT WILL BREAK, BC IT DOES NOT DO ANYTHING
   insamples <- samps # for testing
 
   # Returns two versions of Rhat (measure of convergence, less is better with an approximate

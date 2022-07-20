@@ -24,20 +24,10 @@
 
 
 # Libraries
-library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
-library(tidyr) # Tidy Messy Data, CRAN v1.2.0
-library(readr) # Read Rectangular Text Data, CRAN v2.1.1
-library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
-library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
-require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags
 library(R2jags) # jags.parallel is part of R2jags
 
 source(here("R", "Rhddmjagsutils.R"))
-
-
-# check in places where you have +1 this might be an artifact of the orginals
-# python code
 
 ### Simulations ###
 
@@ -105,7 +95,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
       rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx) / 2 # do you need a 1 here? Was it a python thing
+      acc[indextrack] <- (tempx) / 2 # do you need a 1 here?  It a python thing
       participant[indextrack] <- p
       condition[indextrack] <- k
       indextrack <- indextrack + ntrials
@@ -140,7 +130,6 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   # load dataset
   load(here("data", "genparam_test.RData"))
 }
-
 
 # Fit model to data
 y <- genparam$y
@@ -182,7 +171,6 @@ names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "
 
 # Set random seed
 set.seed(2022)
-
 
 # JAGS code
 tojags <- "model {

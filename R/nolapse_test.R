@@ -25,16 +25,10 @@
 
 
 # Libraries
-# library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
-# library(tidyr) # Tidy Messy Data, CRAN v1.2.0
-# library(readr) # Read Rectangular Text Data, CRAN v2.1.1
-# library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
-# require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags
 library(R2jags) # jags.parallel is part of R2jags
 
 source(here("R", "Rhddmjagsutils.R"))
-
 
 ### Simulations ###
 
@@ -58,11 +52,11 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   # Set random seed
   set.seed(2022)
 
-  ndt <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
+  ter <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
   alpha <- runif(nparts, .8, 1.4) # Uniform from .8 to 1.4 evidence units
   beta <- runif(nparts, .3, .7) # Uniform from .3 to .7 * alpha
   delta <- matrix(runif(nparts * nconds, -4, 4), nrow = nparts, ncol = nconds) # Uniform from -4 to 4 evidence units per second
-  ndttrialrange <- runif(n = nparts, 0, .1) # Uniform from 0 to .1 seconds
+  tertrialrange <- runif(n = nparts, 0, .1) # Uniform from 0 to .1 seconds
   deltatrialsd <- runif(n = nparts, 0, 2) # Uniform from 0 to 2 evidence units per second
   y <- rep(0, N)
   rt <- rep(0, N)
@@ -75,8 +69,8 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
     for (k in seq_len(nconds)) {
       # tempout <- simulratcliff() # for testing
       tempout <- simulratcliff(
-        N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
-        Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = ndttrialrange[[p]]
+        N = ntrials, Alpha = alpha[[p]], Tau = ter[[p]], Beta = beta[[p]],
+        Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = tertrialrange[[p]]
       )
       tempx <- sign(Re(tempout))
       tempt <- abs(Re(tempout))
@@ -90,11 +84,11 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   }
 
   genparam <- vector(mode = "list")
-  genparam$ndt <- ndt
+  genparam$ter <- ter
   genparam$beta <- beta
   genparam$alpha <- alpha
   genparam$delta <- delta
-  genparam$ndttrialrange <- ndttrialrange
+  genparam$tertrialrange <- tertrialrange
   genparam$deltatrialsd <- deltatrialsd
   genparam$rt <- rt
   genparam$acc <- acc
@@ -281,9 +275,6 @@ jagsfit <- R2jags::jags(
 
 samples <- update(jagsfit, n.iter = nsamps)
 
-samps<-coda::as.array.mcmc.list(as.mcmc(samples), drop = T)
-#samps <- as.data.frame(as.matrix(as.mcmc(samples)))
-
 savestring <- here("modelfits", "genparam_test4_nolapse.Rdata")
 print(paste0("Saving results to: ", savestring))
 
@@ -292,3 +283,4 @@ save(samps, file = savestring)
 # Diagnostics
 
 # Posterior distributions
+
