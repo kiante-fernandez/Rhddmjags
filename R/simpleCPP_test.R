@@ -28,7 +28,7 @@
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 library(R2jags) # jags.parallel is part of R2jags
-
+library(patchwork)
 source(here("R", "Rhddmjagsutils.R"))
 
 ### Simulations ###
@@ -63,10 +63,9 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   participant <- rep(0, N) # Participant index
   indextrack <- seq_len(ntrials)
   for (p in seq_len(nparts)) {
-    for (k in seq_len(nconds)) {
       tempout <- simulratcliff(
         N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
-        Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = ndttrialrange[[p]]
+        Nu = delta[[p]], Eta = deltatrialsd[[p]]
       )
       tempx <- sign(Re(tempout))
       tempt <- abs(Re(tempout))
@@ -74,9 +73,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       rt[indextrack] <- tempt
       acc[indextrack] <- (tempx) / 2
       participant[indextrack] <- p
-      condition[indextrack] <- k
       indextrack <- indextrack + ntrials
-    }
   }
   
   genparam <- vector(mode = "list")
@@ -205,7 +202,6 @@ for (c in seq_len(nchains)) {
   }
   initials[[c]] <- initsList()
 }
-
 print(paste0("Fitting ", "simpleEEG", " model ..."))
 
 jagsfit <- R2jags::jags(
@@ -221,10 +217,32 @@ samples <- update(jagsfit, n.iter = nsamps)
 savestring <- here("modelfits", "simpleCPP_test.Rdata")
 print(paste0("Saving results to: ", savestring))
 
-save(samps, file = savestring)
+save(samples, file = savestring)
 
 # Diagnostics
 
 # Posterior distributions
+jellyfish(samples, "alpha")
+
+jellyfish(samples, "ndt")
+
+jellyfish(samples,"beta")
+
+jellyfish(samples, "delta")
+
+jellyfish(samples, "CPPnoise")
+
+# Recovery
+recovery(samples, genparam["alpha"])
+
+recovery(samples, genparam["ndt"])
+
+recovery(samples, genparam["beta"])
+
+recovery(samples, genparam["delta"])
+
+recovery(samples, genparam["CPPnoise"])
+
+# Recovery plots nicely formatting for tutorial
 
 

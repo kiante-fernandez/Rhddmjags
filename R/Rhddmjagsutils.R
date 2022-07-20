@@ -430,13 +430,10 @@ recovery <- function(samples, truevals, filename = NULL) {
   #
   # Parameters
   # ----------
-  # samples :
-  #
+  # samples : samples the rjags object
   # truevals :List of true parameter values (the genparam list)
-  #
   # filename: optional
   
-  # true value on the X axis?
   true_paramname <- names(truevals)
   
   ## if sample_dat  is the model output from R2jags
