@@ -21,6 +21,8 @@
 # ====         ================                       ======================
 # 06/07/22      Kianté Fernandez                      Rewrote Michael python code in R
 # 11/07/22      Kianté Fernandez                      Rewrote Joachim's translations
+# 13/07/22      Kianté Fernandez                      Jellyfish plot code
+# 20/07/22      Kianté Fernandez                      Recovery plot
 
 # Libraries
 
@@ -33,6 +35,8 @@ library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
 library(ggstar)
 library(coda)
+library(gtools)
+
 
 ### Functions ###
 
@@ -266,70 +270,6 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
 
 # simulratcliff() # works?
 
-
-## NEED TO RETURN TO THIS A WRITE IT OUT, JUST LIKE ABOVE
-simuldiff2ndt <- function(N = 100, Alpha = 1, Vet = .2, Rmr = .2, Nu = 1, Zeta = None, rangeVet = 0, rangeRmr = 0, rangeZeta = 0, Eta = .3, Varsigma = 1) {
-  #   SIMULDIFF2NDT  Generates data according to a diffusion model with non-decision time split into two parts with independent variance
-  #
-  #
-  #   Reference:
-  #   Tuerlinckx, F., Maris, E.,
-  #   Ratcliff, R., & De Boeck, P. (2001). A comparison of four methods for
-  #   simulating the diffusion process. Behavior Research Methods,
-  #   Instruments, & Computers, 33, 443-456.
-  #
-  #   Parameters
-  #   ----------
-  #   N: a integer denoting the size of the output vector
-  #   (defaults to 100 experimental trials)
-  #
-  #   Alpha: the mean boundary separation across trials  in evidence units
-  #   (defaults to 1 evidence unit)
-  #
-  #   Vet: the mean visual encoding time across trials in seconds
-  #   (defaults to .2 seconds)
-  #
-  #   Rmr: the mean residual motor response time across trials in seconds
-  #   (defaults to .2 seconds)
-  #
-  #   Nu: the mean drift rate across trials in evidence units per second
-  #   (defaults to 1 evidence units per second, restricted to -5 to 5 units)
-  #
-  #   Zeta: the initial bias in the evidence process for choice A
-  #   (defaults to 50% of total evidence units given by Alpha)
-  #
-  #   rangeVet: Visual encoding time across trials is generated from a uniform
-  #   distribution of Vet - rangeVet/2 to  Vet + rangeVet/2 across trials
-  #   (defaults to 0 seconds)
-  #
-  #   rangeRmr: Residual motor response time across trials is generated from a uniform
-  #   distribution of Rmr - rangeRmr/2 to  Rmr + rangeRmr/2 across trials
-  #   (defaults to 0 seconds)
-  #
-  #   rangeZeta: Bias across trials is generated from a uniform distribution
-  #   of Zeta - rangeZeta/2 to Zeta + rangeZeta/2 across trials
-  #   (defaults to 0 evidence units)
-  #
-  #   Eta: Standard deviation of the drift rate across trials
-  #   (defaults to 3 evidence units per second, restricted to less than 3 evidence units)
-  #
-  #   Varsigma: The diffusion coefficient, the standard deviation of the
-  #   evidence accumulation process within one trial. It is recommended that
-  #   this parameter be kept fixed unless you have reason to explore this parameter
-  #   (defaults to 1 evidence unit per second)
-  #
-  #   Returns
-  #   -------
-  #   Numpy complex vector with 1) Real component ( np.real(x) ): reaction times (in seconds) multiplied by the response vector
-  #   such that negative reaction times encode response B and positive reaction times
-  #   encode response A  and 2) Imaginary component ( np.imag(x) ): N200 peak-latencies in seconds
-  #
-  #
-  # Converted from simuldiff.m MATLAB script by Joachim Vandekerckhove.
-  # Then, converted from pyhddmjagsutils.py Python script by Kianté Fernandez
-  # See also http://ppw.kuleuven.be/okp/dmatoolbox.
-}
-
 diagnostic <- function(insamples) {
   insamples <- samps # for testing
 
@@ -483,6 +423,74 @@ jellyfish <- function(samples, parameter, filename = NULL) {
     ggsave(filename, dpi = 300)
   }
   return(jellyplot)
+}
+
+recovery <- function(samples, truevals, filename = NULL) {
+  # Plots true parameters versus 99% and 95% credible intervals of recovered
+  # parameters. Also plotted are the median (circles) and mean (stars) of the posterior
+  # distributions.
+  #
+  # Parameters
+  # ----------
+  # samples :
+  #
+  # truevals :List of true parameter values (the genparam list)
+  #
+  # filename: optional
+  
+  # true value on the X axis?
+  true_paramname <- names(truevals)
+  
+  ## if sample_dat  is the model output from R2jags
+  sample_dat <- as.data.frame(as.matrix(as.mcmc(samples)))
+  
+  ## name your predicted factor and the CI between lower and upper
+  post_mean <- apply(sample_dat, 2, mean)
+  post_median <- apply(sample_dat, 2, median)
+  
+  # get the intervals
+  post_lower1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.025)))
+  post_upper1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.975)))
+  post_lower2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.005)))
+  post_upper2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.995)))
+  
+  # get parameter names
+  paramname <- colnames(sample_dat)
+  
+  # create data frame of statistics to plot
+  dat <- data.frame(post_mean, post_median, post_lower1, post_upper1, post_lower2, post_upper2, paramname)
+  # remove white space and symbols for indexing
+  var_order <- factor(gsub("[[:punct:]]", "", gsub("\\[|\\]|[0-9]+", "", rownames(dat))))
+  # select the parameters of interest to plot:
+  plt_data <- dat[which(var_order == true_paramname), ]
+  plt_data <- plt_data[mixedsort(sort(plt_data$paramname)), ] # sort data in "correct order"
+  plt_data$truevals <- as.vector(t(truevals[[1]]))
+  
+  ## order the data by the posterior MAPS, for better visualization
+  plt_data <- plt_data[order(plt_data$post_mean), ]
+  
+  ## order the observation IDs
+  plt_data$paramname2 <- reorder(plt_data$paramname, plt_data$post_mean)
+  ## get y = x for plotting
+  plt_data$recoverline <- seq(min(plt_data$truevals), max(plt_data$truevals), length.out = nrow(plt_data))
+  
+  title <- paste0("Recovery of the ", true_paramname)
+  
+  ## make plot using the ggplot:
+  recover_plot <- ggplot(plt_data, aes(x = truevals, y = post_mean)) +
+    geom_segment(aes(x = truevals, xend = truevals, y = post_lower2, yend = post_upper2), color = "cyan2", size = 1) +
+    geom_segment(aes(x = truevals, xend = truevals, y = post_lower1, yend = post_upper1), color = "blue", size = 2) +
+    geom_point(aes(y = post_median), color = "black", shape = 16, size = 4) +
+    ggstar::geom_star(color = "cyan2", fill = "cyan2", size = 3) +
+    labs(title = title, x = "", y = "") +
+    theme_classic() +
+    geom_line(aes(x = recoverline, y = recoverline), color = "darkorange", size = 2)
+  
+  if (!is.null(filename)) {
+    recover_plot
+    ggsave(filename, dpi = 300)
+  }
+  return(recover_plot)
 }
 
 rsquared_pred <- function(trueval, predval) {

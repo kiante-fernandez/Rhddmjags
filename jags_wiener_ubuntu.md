@@ -40,11 +40,8 @@ For instance, if the result is ”/usr/lib/local/JAGS/modules-4/dic.la” Then I
 ./configure --prefix=/usr/lib/local
 ```
 
-#### 5. Test installation (last three commands will be within the R terminal):
+#### 5. Test installation (run commands within the R terminal):
 
-```bash
-jags
-```
 ```
 load.module("wiener")
 load.module("dic")

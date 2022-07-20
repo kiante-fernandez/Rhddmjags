@@ -25,13 +25,12 @@
 
 
 # Libraries
-library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
-library(tidyr) # Tidy Messy Data, CRAN v1.2.0
-library(readr) # Read Rectangular Text Data, CRAN v2.1.1
-library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
-library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
+# library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
+# library(tidyr) # Tidy Messy Data, CRAN v1.2.0
+# library(readr) # Read Rectangular Text Data, CRAN v2.1.1
+# library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
-require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags
+# require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags
 library(R2jags) # jags.parallel is part of R2jags
 
 source(here("R", "Rhddmjagsutils.R"))
@@ -279,23 +278,16 @@ jagsfit <- R2jags::jags(
   n.chains = nchains,
   n.burnin = burnin, jags.module = "wiener"
 )
-# Parallel?
-# jagsfit_p <- jags.parallel(
-#   model.file = modelfile,
-#   data = datalist, inits = initials, jags_params,
-#   n.iter = nsamps,
-#   n.chains = nchains,
-#   n.burnin = burnin, jags.module = "wiener"
-# )
 
 samples <- update(jagsfit, n.iter = nsamps)
 
 samps<-coda::as.array.mcmc.list(as.mcmc(samples), drop = T)
+#samps <- as.data.frame(as.matrix(as.mcmc(samples)))
 
 savestring <- here("modelfits", "genparam_test4_nolapse.Rdata")
 print(paste0("Saving results to: ", savestring))
 
-save(samples, file = savestring)
+save(samps, file = savestring)
 
 # Diagnostics
 
