@@ -245,5 +245,25 @@ recovery(samples, genparam["delta"])
 recovery(samples, genparam["CPPnoise"])
 
 # Recovery plots nicely formatting for tutorial
+#delta
+p1 <- recovery(samples, genparam["delta"])
+p1 <- p1 + labs(x = "Simulated \u03B4 (\u03bcV/sec)",
+          y = "Posterior of \u03B4 (\u03bcV/sec)")
+#alpha
+p2 <- recovery(samples, genparam["alpha"])
+p2 <- p2 + labs(x = "Simulated \U03B1 (\u03bcV/sec)",
+                y = "Posterior of \U03B1 (\u03bcV/sec)")
+#tau
+p3 <- recovery(samples, genparam["ndt"])
+p3 <- p3 + labs(x = "Simulated \U03C4 (\u03bcV/sec)",
+                y = "Posterior of \U03C4 (\u03bcV/sec)")
+#beta
+p4 <- recovery(samples, genparam["beta"])
+p4 <- p4 + labs(x = "Simulated \U03B2 (\u03bcV/sec)",
+                y = "Posterior of \U03B2 (\u03bcV/sec)")
+#sigma
+p5 <- recovery(samples, genparam["CPPnoise"])
+p5 <- p5 + labs(x = "Simulated \U03C3 (\u03bcV/sec)",
+                y = "Posterior of \U03C3 (\u03bcV/sec)")
 
-
+p1 / (p2 + p3)/(p4 + p5)
