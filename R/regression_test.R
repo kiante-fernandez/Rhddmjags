@@ -20,8 +20,9 @@
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
 # 11/07/22      Kianté  Fernandez                      Starting coding
-# 13/07/22      Kianté  Fernandez                      Completeted Buggs code
-
+# 13/07/22      Kianté  Fernandez                      Completed Buggs code
+# 20/07/22      Kianté  Fernandez                      added jelly and recovery plots
+ 
 
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
@@ -34,7 +35,7 @@ source(here("R", "Rhddmjagsutils.R"))
 # Generate samples from the joint-model of reaction time and choice
 # Note you could remove this if statement and replace with loading your own data and nameing it `genparam`
 
-if (!file.exists(here("data", "genparam_test.RData"))) {
+if (!file.exists(here("data", "genparam_reg_test.RData"))) {
 
   # Number of simulated participants
   nparts <- 10
@@ -95,7 +96,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
       rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx) / 2 # do you need a 1 here?  It a python thing
+      acc[indextrack] <- (tempx) / 2
       participant[indextrack] <- p
       condition[indextrack] <- k
       indextrack <- indextrack + ntrials
@@ -125,10 +126,10 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   genparam$nconds <- nconds
   genparam$ntrials <- ntrials
   genparam$N <- N
-  save(genparam, file = here("data", "genparam_test.RData"))
+  save(genparam, file = here("data", "genparam_reg_test.RData"))
 } else {
   # load dataset
-  load(here("data", "genparam_test.RData"))
+  load(here("data", "genparam_reg_test.RData"))
 }
 
 # Fit model to data
@@ -142,11 +143,11 @@ regressors1 <- genparam$regressors1
 ntrials <- genparam$ntrials
 N <- genparam$N
 
-minrt <- matrix(rep(0, nparts*nconds),  nrow = nparts, ncol = nconds)
+minrt <- matrix(rep(0, nparts * nconds), nrow = nparts, ncol = nconds)
 
 for (p in seq_len(nparts)) {
   for (k in seq_len(nconds)) {
-  minrt[[p, k]] <- min(rt[(participant == p) & (condition == k)])
+    minrt[[p, k]] <- min(rt[(participant == p) & (condition == k)])
   }
 }
 
@@ -167,7 +168,7 @@ datalist <- list(
 )
 
 # get names for the list
-names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "regressors1","Ones","Constant")
+names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "regressors1", "Ones", "Constant")
 
 # Set random seed
 set.seed(2022)
@@ -340,13 +341,13 @@ jagsfit <- jags(
 
 samples <- update(jagsfit, n.iter = nsamps)
 
-savestring <- here("modelfits", "genparam_test4_nolapse.Rdata")
+savestring <- here("modelfits", "genparam_regression_test.Rdata")
 print(paste0("Saving results to: ", savestring))
 
 save(samples, file = savestring)
 
 # Diagnostics
-#for now just call the jags object Diagnostics() function soon to come!
+# for now just call the jags object Diagnostics() function soon to come!
 samples
 
 # Posterior distributions
@@ -365,16 +366,14 @@ recovery(samples, genparam["ndt"])
 
 recovery(samples, genparam["alpha"])
 
-recovery(samples, genparam["delta_int"])
-
-recovery(samples, genparam["ndt_int"])
-
-recovery(samples, genparam["alpha_int"])
-
-recovery(samples, genparam["delta_gamma"])
-
-recovery(samples, genparam["ndt_gamma"])
-
-recovery(samples, genparam["alpha_gamma"])
-
-
+# recovery(samples, genparam["delta_int"])
+# 
+# recovery(samples, genparam["ndt_int"])
+# 
+# recovery(samples, genparam["alpha_int"])
+# 
+# recovery(samples, genparam["delta_gamma"])
+# 
+# recovery(samples, genparam["ndt_gamma"])
+# 
+# recovery(samples, genparam["alpha_gamma"])

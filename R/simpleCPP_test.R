@@ -23,6 +23,7 @@
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
 # 20/07/2022    Kianté Fernandez                        Original code generation
+# 20/07/2022      Kianté  Fernandez                      added jelly and recovery plots
 
 
 # Libraries
@@ -37,46 +38,46 @@ source(here("R", "Rhddmjagsutils.R"))
 # Note you could remove this if statement and replace with loading your own data to dictionary "gendata"
 
 if (!file.exists(here("data", "genparam_test.RData"))) {
-  
+
   # Number of simulated participants
   nparts <- 10
-  
+
   # Number of trials per participant and condition
   ntrials <- 100
-  
+
   # Number of total trials in each simulation
   N <- ntrials * nparts
-  
+
   # Set random seed
   set.seed(2022)
-  
+
   ndt <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
   alpha <- runif(nparts, .8, 1.4) # Uniform from .8 to 1.4 evidence units
   beta <- runif(nparts, .3, .7) # Uniform from .3 to .7 * alpha
   delta <- runif(nparts, -4, 4) # Uniform from -4 to 4 evidence units per second
   deltatrialsd <- runif(nparts, 0, 2) # Uniform from 0 to 2 evidence units per second
-  CPPnoise = runif(nparts, 0, 1) # Uniform from 0 to 1 evidence units per second
+  CPPnoise <- runif(nparts, 0, 1) # Uniform from 0 to 1 evidence units per second
   y <- rep(0, N)
   rt <- rep(0, N)
   acc <- rep(0, N)
-  CPP <-  rep(0, N)
+  CPP <- rep(0, N)
   participant <- rep(0, N) # Participant index
   indextrack <- seq_len(ntrials)
   for (p in seq_len(nparts)) {
-      tempout <- simulratcliff(
-        N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
-        Nu = delta[[p]], Eta = deltatrialsd[[p]]
-      )
-      tempx <- sign(Re(tempout))
-      tempt <- abs(Re(tempout))
-      CPP[indextrack] <- rnorm(ntrials, delta[[p]],CPPnoise[[p]])
-      y[indextrack] <- tempx * tempt
-      rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx) / 2
-      participant[indextrack] <- p
-      indextrack <- indextrack + ntrials
+    tempout <- simulratcliff(
+      N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
+      Nu = delta[[p]], Eta = deltatrialsd[[p]]
+    )
+    tempx <- sign(Re(tempout))
+    tempt <- abs(Re(tempout))
+    CPP[indextrack] <- rnorm(ntrials, delta[[p]], CPPnoise[[p]])
+    y[indextrack] <- tempx * tempt
+    rt[indextrack] <- tempt
+    acc[indextrack] <- (tempx) / 2
+    participant[indextrack] <- p
+    indextrack <- indextrack + ntrials
   }
-  
+
   genparam <- vector(mode = "list")
   genparam$ndt <- ndt
   genparam$beta <- beta
@@ -103,14 +104,14 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
 # Set random seed
 set.seed(2022)
 
-tojags = "
+tojags <- "
 model {
-    
+
     ##########
     #Simple NDDM parameter priors
     ##########
     for (p in 1:nparts) {
-    
+
         #Boundary parameter (speed-accuracy tradeoff) per participant
         alpha[p] ~ dnorm(1, pow(.5,-2))T(0, 3)
 
@@ -174,7 +175,7 @@ ntrials <- genparam$ntrials
 minrt <- rep(0, nparts)
 
 datalist <- list(
-  y <- y,#note are you feeding the correct thing here?
+  y <- y, # note are you feeding the correct thing here?
   N <- N,
   CPP <- CPP,
   nparts <- nparts,
@@ -184,9 +185,9 @@ for (p in seq_len(nparts)) {
   minrt[[p]] <- min(rt[(participant == p)])
 }
 # get names for the list
-names(datalist) <- c("y", "N","CPP", "nparts", "participant")
+names(datalist) <- c("y", "N", "CPP", "nparts", "participant")
 
-#initialize initial values
+# initialize initial values
 initials <- vector(mode = "list")
 for (c in seq_len(nchains)) {
   initsList <- function() {
@@ -221,14 +222,14 @@ print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 # Diagnostics
-#for now just call the jags object Diagnostics() function soon to come!
+# for now just call the jags object Diagnostics() function soon to come!
 samples
 # Posterior distributions
 jellyfish(samples, "alpha")
 
 jellyfish(samples, "ndt")
 
-jellyfish(samples,"beta")
+jellyfish(samples, "beta")
 
 jellyfish(samples, "delta")
 
@@ -246,27 +247,36 @@ recovery(samples, genparam["delta"])
 recovery(samples, genparam["CPPnoise"])
 
 # Recovery plots nicely formatting for tutorial
-#delta
+# delta
 p1 <- recovery(samples, genparam["delta"])
-p1 <- p1 + labs(x = "Simulated \u03B4 (\u03bcV/sec)",
-          y = "Posterior of \u03B4 (\u03bcV/sec)")
-#alpha
+p1 <- p1 + labs(
+  x = "Simulated \u03B4 (\u03bcV/sec)",
+  y = "Posterior of \u03B4 (\u03bcV/sec)"
+)
+# alpha
 p2 <- recovery(samples, genparam["alpha"])
-p2 <- p2 + labs(x = "Simulated \U03B1 (\u03bcV/sec)",
-                y = "Posterior of \U03B1 (\u03bcV/sec)")
-#tau
+p2 <- p2 + labs(
+  x = "Simulated \U03B1 (\u03bcV/sec)",
+  y = "Posterior of \U03B1 (\u03bcV/sec)"
+)
+# tau
 p3 <- recovery(samples, genparam["ndt"])
-p3 <- p3 + labs(x = "Simulated \U03C4 (\u03bcV/sec)",
-                y = "Posterior of \U03C4 (\u03bcV/sec)")
-#beta
+p3 <- p3 + labs(
+  x = "Simulated \U03C4 (\u03bcV/sec)",
+  y = "Posterior of \U03C4 (\u03bcV/sec)"
+)
+# beta
 p4 <- recovery(samples, genparam["beta"])
-p4 <- p4 + labs(x = "Simulated \U03B2 (\u03bcV/sec)",
-                y = "Posterior of \U03B2 (\u03bcV/sec)")
-#sigma
+p4 <- p4 + labs(
+  x = "Simulated \U03B2 (\u03bcV/sec)",
+  y = "Posterior of \U03B2 (\u03bcV/sec)"
+)
+# sigma
 p5 <- recovery(samples, genparam["CPPnoise"])
-p5 <- p5 + labs(x = "Simulated \U03C3 (\u03bcV/sec)",
-                y = "Posterior of \U03C3 (\u03bcV/sec)")
+p5 <- p5 + labs(
+  x = "Simulated \U03C3 (\u03bcV/sec)",
+  y = "Posterior of \U03C3 (\u03bcV/sec)"
+)
 
-p1 / (p2 + p3)/(p4 + p5) 
-ggsave(here("figures","All_recovery_simpleCPP.png"), dpi = 300)
-
+p1 / (p2 + p3) / (p4 + p5)
+ggsave(here("figures", "All_recovery_simpleCPP.png"), dpi = 300)
