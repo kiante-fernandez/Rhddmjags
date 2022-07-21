@@ -32,10 +32,11 @@ sudo make install
 #### 4. Test installation (run commands within the R terminal):
 
 ```
+library(R2jags)
+
 load.module("wiener")
 load.module("dic")
 list.modules()
 ```
 
-A successful installation of JAGS should load the modules: basemod “ok”, bugs “ok”, and dic “ok”. A successful installation of JAGS-WIENER that is found by JAGS will load wiener “ok”.
-
+A successful installation of JAGS should load the modules: "basemod" "bugs" "dic". A successful installation of JAGS-WIENER that is found by JAGS will load "wiener"

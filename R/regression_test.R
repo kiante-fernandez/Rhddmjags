@@ -171,7 +171,7 @@ datalist <- list(
 names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "regressors1", "Ones", "Constant")
 
 # Set random seed
-set.seed(2022)
+set.seed(2021)
 
 # JAGS code
 tojags <- "model {
@@ -296,6 +296,7 @@ modelfile <- here("jagscode", "regression_test.jags")
 #   "delta_gamma", "ndt_gamma", "alpha_gamma",
 #   "delta", "ndt", "alpha", "problapse", "DDMorLapse"
 # )
+#Alternativly you can just track the variables to plot
 jags_params <- c(
   "delta_int", "ndt_int", "alpha_int",
   "delta_gamma", "ndt_gamma", "alpha_gamma",

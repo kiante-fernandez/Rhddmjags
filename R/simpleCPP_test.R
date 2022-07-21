@@ -40,7 +40,7 @@ source(here("R", "Rhddmjagsutils.R"))
 if (!file.exists(here("data", "genparam_test.RData"))) {
 
   # Number of simulated participants
-  nparts <- 10
+  nparts <- 100
 
   # Number of trials per participant and condition
   ntrials <- 100
