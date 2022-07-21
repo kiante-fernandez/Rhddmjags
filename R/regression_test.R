@@ -41,16 +41,16 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
   nparts <- 10
 
   # Number of conditions
-  nconds <- 4
+  nconds <- 3
 
   # Number of trials per participant and condition
-  ntrials <- 100
+  ntrials <- 10
 
   # Number of total trials in each simulation
   N <- ntrials * nparts * nconds
 
   # Set random seed
-  set.seed(2022)
+  set.seed(2021)
 
   # Intercepts of linear regressions
   ndt_int <- matrix(rep(runif(nconds, .4, .7), nparts), nrow = nparts, ncol = nconds) # Uniform from .4 to .7 seconds
@@ -91,7 +91,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
       mindwanderx <- sample(0:2, ntrials, replace = T) * 2 - 1
       mindwandert <- runif(n = ntrials, 0, 2) # Randomly distributed from 0 to 2 seconds
 
-      mindwander_trials <- sample(1:ntrials, prob = rep(prob_lapse[[1]] / 100, ntrials), replace = F)
+      mindwander_trials <- sample(1:ntrials, prob = rep(prob_lapse[[p]] / 100, ntrials), replace = F)
       tempx[mindwander_trials] <- mindwanderx[mindwander_trials]
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
@@ -283,20 +283,24 @@ list.modules()
 
 writeLines(tojags, here("jagscode", "regression_test.jags"))
 
-nchains <- 3
-burnin <- 250
-nsamps <- 5000
+nchains <- 4
+burnin <- 4000
+nsamps <- 20000
 
 modelfile <- here("jagscode", "regression_test.jags")
 
 # Track these variables
+# jags_params <- c(
+#   "deltasdcond", "ndtsdcond", "alphasdcond", "problapsesd",
+#   "problapsehier", "delta_int", "ndt_int", "alpha_int",
+#   "delta_gamma", "ndt_gamma", "alpha_gamma",
+#   "delta", "ndt", "alpha", "problapse", "DDMorLapse"
+# )
 jags_params <- c(
-  "deltasdcond", "ndtsdcond", "alphasdcond", "problapsesd",
-  "problapsehier", "delta_int", "ndt_int", "alpha_int",
+  "delta_int", "ndt_int", "alpha_int",
   "delta_gamma", "ndt_gamma", "alpha_gamma",
-  "delta", "ndt", "alpha", "problapse", "DDMorLapse"
+  "delta", "ndt", "alpha"
 )
-
 
 initials <- vector(mode = "list")
 for (c in seq_len(nchains)) {
@@ -351,21 +355,20 @@ save(samples, file = savestring)
 samples
 
 # Posterior distributions
-
-jellyfish(samples, "delta")
-
-jellyfish(samples, "ndt")
-
-jellyfish(samples, "alpha")
-
+# 
+# jellyfish(jagsfit, "delta")
+# 
+# jellyfish(samples, "ndt")
+# 
+# jellyfish(samples, "alpha")
 # Recovery
 
-recovery(samples, genparam["delta"])
-
-recovery(samples, genparam["ndt"])
-
-recovery(samples, genparam["alpha"])
-
+# recovery(jagsfit, genparam["delta"])
+# # 
+# recovery(jagsfit, genparam["ndt"])
+# # 
+# recovery(jagsfit, genparam["alpha"])
+# 
 # recovery(samples, genparam["delta_int"])
 # 
 # recovery(samples, genparam["ndt_int"])
