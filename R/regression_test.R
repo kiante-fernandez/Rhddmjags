@@ -22,7 +22,8 @@
 # 11/07/22      Kianté  Fernandez                      Starting coding
 # 13/07/22      Kianté  Fernandez                      Completed Buggs code
 # 20/07/22      Kianté  Fernandez                      added jelly and recovery plots
- 
+# 01/08/22      Kianté  Fernandez                      fixed laspse trial bug
+
 
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
@@ -91,7 +92,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
       mindwanderx <- sample(0:2, ntrials, replace = T) * 2 - 1
       mindwandert <- runif(n = ntrials, 0, 2) # Randomly distributed from 0 to 2 seconds
 
-      mindwander_trials <- sample(1:ntrials, prob = rep(prob_lapse[[p]] / 100, ntrials), replace = F)
+      mindwander_trials <- sample(1:ntrials, size =as.integer(round(ntrials*(prob_lapse[[p]] / 100))), replace = F)
       tempx[mindwander_trials] <- mindwanderx[mindwander_trials]
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
@@ -283,9 +284,9 @@ list.modules()
 
 writeLines(tojags, here("jagscode", "regression_test.jags"))
 
-nchains <- 4
-burnin <- 4000
-nsamps <- 20000
+nchains <- 3
+burnin <- 200
+nsamps <- 1000
 
 modelfile <- here("jagscode", "regression_test.jags")
 
@@ -357,14 +358,14 @@ samples
 
 # Posterior distributions
 
-# jellyfish(jagsfit, "delta")
+jellyfish(jagsfit, "delta")
 # 
-# jellyfish(jagsfit, "ndt")
+jellyfish(jagsfit, "ndt")
 # 
-# jellyfish(jagsfit, "alpha")
+jellyfish(jagsfit, "alpha")
 # 
 # # Recovery
-# recovery(jagsfit, genparam["delta"])
+recovery(jagsfit, genparam["delta"])
 # 
 # recovery(jagsfit, genparam["ndt"])
 # 

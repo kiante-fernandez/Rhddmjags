@@ -40,10 +40,10 @@ source(here("R", "Rhddmjagsutils.R"))
 if (!file.exists(here("data", "genparam_test.RData"))) {
   
   # Number of simulated participants
-  nparts <- 10
+  nparts <- 40
   
   # Number of conditions
-  nconds <- 3
+  nconds <- 6
   
   # Number of trials per participant and condition
   ntrials <- 50
@@ -78,7 +78,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       mindwanderx <- sample(0:2, ntrials, replace = T) * 2 - 1
       mindwandert <- runif(n = ntrials, 0, 2) # Randomly distributed from 0 to 2 seconds
       
-      mindwander_trials <- sample(1:ntrials, prob = rep(prob_lapse[[p]] / 100, ntrials), replace = F)
+      mindwander_trials <- sample(1:ntrials, size =as.integer(round(ntrials*(prob_lapse[[p]] / 100))), replace = F)
       tempx[mindwander_trials] <- mindwanderx[mindwander_trials]
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
@@ -223,9 +223,9 @@ list.modules()
 
 writeLines(tojags, here("jagscode", "recovery_test.jags"))
 
-nchains <- 3
-burnin <- 200
-nsamps <- 1000
+nchains <- 6
+burnin <- 2000
+nsamps <- 10000
 
 modelfile <- here("jagscode", "recovery_test.jags")
 
@@ -308,6 +308,7 @@ samples <- jags(
   n.iter = nsamps,
   n.chains = nchains,
   n.burnin = burnin, 
+  n.thin = 10,
   jags.module = "wiener"
 )
 savestring <- here("modelfits", "genparam_test_model.Rdata")
@@ -320,29 +321,20 @@ samples
 
 # Posterior distributions
 
-# jellyfish(samples, "delta")
-# # 
-# jellyfish(samples, "ter")
-# # 
-# jellyfish(samples, "alpha")
-# 
-# # Recovery
-# recovery(samples, genparam["delta"])
-# 
-# recovery(jagsfit, genparam["ndt"])
-# 
-# recovery(jagsfit, genparam["alpha"])
-# 
-# recovery(samples, genparam["delta_int"])
-# 
-# recovery(jagsfit, genparam["ndt_int"])
-# 
-# # recovery(samples, genparam["alpha_int"])
-# 
-# recovery(jagsfit, genparam["delta_gamma"])
-# 
-# recovery(samples, genparam["ndt_gamma"])
-# 
-# recovery(samples, genparam["alpha_gamma"])
+jellyfish(samples, "delta","figures/delta_posteriors_model.png")
 
+jellyfish(samples, "ter","figures/ter_posteriors_model.png")
+
+jellyfish(samples, "beta","figures/beta_posteriors_model.png")
+
+jellyfish(samples, "alpha","figures/alpha_posteriors_model.png")
+# 
+# Recovery
+recovery(samples, genparam["delta"],"figures/delta_recovery_model.png")
+
+# recovery(jagsfit, genparam["ter"]) #naming issue
+
+recovery(samples, genparam["beta"],"figures/beta_recovery_model.png")
+
+recovery(samples, genparam["alpha"],"figures/alpha_recovery_model.png")
 
