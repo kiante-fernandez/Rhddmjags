@@ -1,4 +1,5 @@
-# regression_test.R - Testing JAGS fits of HDDM models with participant-level regressors in JAGS using Rjags in R
+# recovery_test.R - Testing JAGS fits of HDDM models in JAGS using R2jags in R
+#                    This hierarchical model is usuaully appropriate for trials with intermixed experimental conditions
 #
 # Copyright (C) 2022 Kianté Fernandez, <kiantefernan@gmail.com>
 #
@@ -15,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# This R code was generated using Michael D. Nunez's `recovery_test.py`
+#
 # Record of Revisions
 #
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
-# 11/07/22      Kianté  Fernandez                      Starting coding
-# 13/07/22      Kianté  Fernandez                      Completed Buggs code
-# 20/07/22      Kianté  Fernandez                      added jelly and recovery plots
- 
+# 01/08/2022    Kianté Fernandez                        Original code generation
+
+
 
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
@@ -35,42 +37,27 @@ source(here("R", "Rhddmjagsutils.R"))
 # Generate samples from the joint-model of reaction time and choice
 # Note you could remove this if statement and replace with loading your own data and nameing it `genparam`
 
-if (!file.exists(here("data", "genparam_reg_test.RData"))) {
-
+if (!file.exists(here("data", "genparam_test.RData"))) {
+  
   # Number of simulated participants
-  nparts <- 10
-
+  nparts <- 40
+  
   # Number of conditions
-  nconds <- 3
-
+  nconds <- 6
+  
   # Number of trials per participant and condition
-  ntrials <- 10
-
+  ntrials <- 50
+  
   # Number of total trials in each simulation
   N <- ntrials * nparts * nconds
-
+  
   # Set random seed
   set.seed(200)
-
-  # Intercepts of linear regressions
-  ndt_int <- matrix(rep(runif(nconds, .4, .7), nparts), nrow = nparts, ncol = nconds) # Uniform from .4 to .7 seconds
-  alpha_int <- matrix(rep(runif(nconds, .8, 1.4), nparts), nrow = nparts, ncol = nconds) # Uniform from .8 to 1.4 evidence units
-  delta_int <- matrix(rep(runif(nconds, -2, 2), nparts), nrow = nparts, ncol = nconds) # Uniform from -2 to 2 evidence units per second
-
-  # Slopes of linear regressions
-  ndt_gamma <- matrix(rep(runif(nconds, 0, .1), nparts), nrow = nparts, ncol = nconds)
-  alpha_gamma <- matrix(rep(runif(nconds, -.1, .1), nparts), nrow = nparts, ncol = nconds)
-  delta_gamma <- matrix(rep(runif(nconds, -1, 1), nparts), nrow = nparts, ncol = nconds)
-
-  # Regressors
-  regressors1 <- matrix(rnorm(nparts * nconds), nrow = nparts, ncol = nconds) # The same regressors for each parameter, from a standard normal distribution
-
-  # True parameters
-  ndt <- ndt_int + ndt_gamma * regressors1
-  alpha <- alpha_int + alpha_gamma * regressors1
-  delta <- delta_int + delta_gamma * regressors1
-
-
+  
+  ndt <- # Uniform from .15 to .6 seconds
+  alpha <- # Uniform from .8 to 1.4 evidence units
+  beta <- # Uniform from .3 to .7 * alpha
+  delta <- # Uniform from -4 to 4 evidence units per second
   ndttrialrange <- runif(n = nparts, 0, .1) # Uniform from 0 to .1 seconds
   deltatrialsd <- runif(n = nparts, 0, 2) # Uniform from 0 to 2 evidence units per second
   prob_lapse <- runif(n = nparts, 0, 10) # From 0 to 10 percent of trials
@@ -90,7 +77,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
       tempt <- abs(Re(tempout))
       mindwanderx <- sample(0:2, ntrials, replace = T) * 2 - 1
       mindwandert <- runif(n = ntrials, 0, 2) # Randomly distributed from 0 to 2 seconds
-
+      
       mindwander_trials <- sample(1:ntrials, prob = rep(prob_lapse[[p]] / 100, ntrials), replace = F)
       tempx[mindwander_trials] <- mindwanderx[mindwander_trials]
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
@@ -102,7 +89,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
       indextrack <- indextrack + ntrials
     }
   }
-
+  
   genparam <- vector(mode = "list")
   genparam$ndt <- ndt
   genparam$alpha <- alpha
@@ -322,13 +309,13 @@ for (c in seq_len(nchains)) {
     chaininit$ndt <- matrix(runif(nparts * nconds, .1, .5), nrow = nparts, ncol = nconds)
     chaininit$alpha <- matrix(runif(nparts * nconds, .5, 2.), nrow = nparts, ncol = nconds)
     chaininit$problapse <- runif(nparts, .01, .1)
-
+    
     for (p in seq_len(nparts)) {
       for (k in seq_len(nconds)) {
         chaininit$ndt[[p, k]] <- runif(1, 0, minrt[[p, k]] / 2)
       }
     }
-
+    
     return(chaininit)
   }
   initials[[c]] <- initsList()

@@ -115,13 +115,6 @@ p3 <- p_ccp + theme(legend.position = "none") +
   scale_x_continuous(limits = c(ndt, 2)) +
   scale_y_continuous(limits = c(0, 1))
 
-
-# Statistics of simulation
-print(paste0("There are ", sum(is.na(rts)), " missing responses"))
-print(paste0("The mean response time is ", mean(rts, na.rm = T), " seconds"))
-print(paste0("The minimum response time is ", min(rts, na.rm = T), " seconds"))
-print(paste0("The maximum response time is ", max(rts, na.rm = T), " seconds"))
-
 # Plot estimated density of response times
 p2 <- ggplot(data_frame(choice_rts = rts * choice), aes(choice_rts)) +
   geom_density(color = "blue", fill = "lightskyblue") +
@@ -141,7 +134,15 @@ p4 <- ggplot(data_frame(cpp_slopes), aes(cpp_slopes)) +
     y = "Density"
   )
 
+#print out the subplots
 (p1 + p2) / (p3 + p4) # Combine plots
+
+# Statistics of simulation
+print(paste0("There are ", sum(is.na(rts)), " missing responses"))
+print(paste0("The mean response time is ", mean(rts, na.rm = T), " seconds"))
+print(paste0("The minimum response time is ", min(rts, na.rm = T), " seconds"))
+print(paste0("The maximum response time is ", max(rts, na.rm = T), " seconds"))
+
 
 # Plot estimate CDF of response times
 data_frame(rts = rts, choice = choice) %>%

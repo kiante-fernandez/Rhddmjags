@@ -47,7 +47,7 @@ import pyhddmjagsutils as phju
 
 if not os.path.exists('data/simpleEEG_test1.mat'):
     # Number of simulated participants
-    nparts = 100
+    nparts = 10
 
     # Number of trials for one participant
     ntrials = 100

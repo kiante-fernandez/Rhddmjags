@@ -25,6 +25,7 @@
 # 20/07/22      Kianté Fernandez                      Recovery plot
 
 # Libraries
+#TODO add something to check install of packages and install them on call
 
 library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
 library(tidyr) # Tidy Messy Data, CRAN v1.2.0
@@ -359,6 +360,8 @@ diagnostic <- function(insamples) {
   }
 }
 
+#testing
+# parameter = "delta"
 jellyfish <- function(samples, parameter, filename = NULL) {
   #   Plots posterior distributions of given posterior samples in a jellyfish
   #   plot. Jellyfish plots are posterior distributions (mirrored over their
@@ -423,6 +426,7 @@ jellyfish <- function(samples, parameter, filename = NULL) {
   return(jellyplot)
 }
 
+# truevals = genparam["ter"]
 recovery <- function(samples, truevals, filename = NULL) {
   # Plots true parameters versus 99% and 95% credible intervals of recovered
   # parameters. Also plotted are the median (circles) and mean (stars) of the posterior
@@ -468,7 +472,7 @@ recovery <- function(samples, truevals, filename = NULL) {
   plt_data$paramname2 <- reorder(plt_data$paramname, plt_data$post_mean)
   ## get y = x for plotting
   plt_data$recoverline <- seq(min(plt_data$truevals), max(plt_data$truevals), length.out = nrow(plt_data))
-  
+
   title <- paste0("Recovery of the ", true_paramname)
   
   ## make plot using the ggplot:

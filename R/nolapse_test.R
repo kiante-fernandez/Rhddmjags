@@ -22,13 +22,14 @@
 # 06/07/22      Kianté  Fernandez                 Rewrote python code for generate data
 # 11/07/22      Kianté  Fernandez                 started Jags code Re-coding
 # 13/07/22      Kianté  Fernandez                 fixed the initialization of chains lists
+# 20/07/22      Kianté  Fernandez                Added plotting code
 
 
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 library(R2jags) # jags.parallel is part of R2jags
 
-source(here("R", "Rhddmjagsutils.R"))
+source(here("R", "Rhddmjagsutils.R")) #make sure you have correct installs
 
 ### Simulations ###
 
@@ -67,7 +68,6 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
 
   for (p in seq_len(nparts)) {
     for (k in seq_len(nconds)) {
-      # tempout <- simulratcliff() # for testing
       tempout <- simulratcliff(
         N = ntrials, Alpha = alpha[[p]], Tau = ter[[p]], Beta = beta[[p]],
         Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = tertrialrange[[p]]
@@ -76,7 +76,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
       tempt <- abs(Re(tempout))
       y[indextrack] <- tempx * tempt
       rt[indextrack] <- tempt
-      acc[indextrack] <- (tempx) / 2 # do you need this 1 here?
+      acc[indextrack] <- (tempx) / 2
       participant[indextrack] <- p
       condition[indextrack] <- k
       indextrack <- indextrack + ntrials
@@ -274,10 +274,8 @@ jagsfit <- R2jags::jags(
 )
 
 samples <- update(jagsfit, n.iter = nsamps)
-
 savestring <- here("modelfits", "genparam_test4_nolapse.Rdata")
 print(paste0("Saving results to: ", savestring))
-
 save(samps, file = savestring)
 
 # Diagnostics
@@ -285,19 +283,19 @@ save(samps, file = savestring)
 samples
 
 # Posterior distributions
-jellyfish(samples, "delta")
+jellyfish(samples, "delta",filename = "figures/delta_posteriors_nolapse.png")
 
-jellyfish(samples, "ter")
+jellyfish(samples, "ter",filename = "figures/ter_posteriors_nolapse.png")
 
-jellyfish(samples, "beta")
+jellyfish(samples, "beta",filename = "figures/beta_posteriors_nolapse.png")
 
-jellyfish(samples, "alpha")
+jellyfish(samples, "alpha",filename = "figures/alpha_posteriors_nolapse.png")
 
 # Recovery
-recovery(samples, genparam["delta"])
+recovery(samples, genparam["delta"],filename =  "figures/delta_recovery_nolapse.png")
 
-recovery(samples, genparam["ter"])
+recovery(samples, genparam["ter"],filename =  "figures/ter_recovery_nolapse.png")
 
-recovery(samples, genparam["beta"])
+recovery(samples, genparam["beta"],filename =  "figures/beta_recovery_nolapse.png")
 
-recovery(samples, genparam["alpha"])
+recovery(samples, genparam["alpha"],filename =  "figures/alpha_recovery_nolapse.png")

@@ -156,7 +156,7 @@ for p in range(0,nparts):
 
 
 # Set random seed
-np.random.seed(2021)
+np.random.seed(2022)
 
 # Input for mixture modeling
 Ones = np.ones(N)
