@@ -40,10 +40,10 @@ source(here("R", "Rhddmjagsutils.R"))
 if (!file.exists(here("data", "genparam_test.RData"))) {
   
   # Number of simulated participants
-  nparts <- 40
+  nparts <- 10
   
   # Number of conditions
-  nconds <- 6
+  nconds <- 3
   
   # Number of trials per participant and condition
   ntrials <- 50
@@ -52,12 +52,12 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   N <- ntrials * nparts * nconds
   
   # Set random seed
-  set.seed(200)
+  set.seed(2022)
   
-  ndt <- # Uniform from .15 to .6 seconds
-  alpha <- # Uniform from .8 to 1.4 evidence units
-  beta <- # Uniform from .3 to .7 * alpha
-  delta <- # Uniform from -4 to 4 evidence units per second
+  ndt <- runif(n = nparts, min = .15, max = .6) # Uniform from .15 to .6 seconds
+  alpha <- runif(nparts, .8, 1.4) # Uniform from .8 to 1.4 evidence units
+  beta <- runif(nparts, .3, .7) # Uniform from .3 to .7 * alpha
+  delta <- matrix(runif(nparts * nconds, -4, 4), nrow = nparts, ncol = nconds) # Uniform from -4 to 4 evidence units per second
   ndttrialrange <- runif(n = nparts, 0, .1) # Uniform from 0 to .1 seconds
   deltatrialsd <- runif(n = nparts, 0, 2) # Uniform from 0 to 2 evidence units per second
   prob_lapse <- runif(n = nparts, 0, 10) # From 0 to 10 percent of trials
@@ -70,7 +70,7 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   for (p in seq_len(nparts)) {
     for (k in seq_len(nconds)) {
       tempout <- simulratcliff(
-        N = ntrials, Alpha = alpha[[p, k]], Tau = ndt[[p, k]],
+        N = ntrials, Alpha = alpha[[p]], Tau = ndt[[p]], Beta = beta[[p]],
         Nu = delta[[p, k]], Eta = deltatrialsd[[p]], rangeTau = ndttrialrange[[p]]
       )
       tempx <- sign(Re(tempout))
@@ -92,15 +92,9 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   
   genparam <- vector(mode = "list")
   genparam$ndt <- ndt
+  genparam$beta = beta
   genparam$alpha <- alpha
   genparam$delta <- delta
-  genparam$ndt_int <- ndt_int
-  genparam$alpha_int <- alpha_int
-  genparam$delta_int <- delta_int
-  genparam$ndt_gamma <- ndt_gamma
-  genparam$alpha_gamma <- alpha_gamma
-  genparam$delta_gamma <- delta_gamma
-  genparam$regressors1 <- regressors1
   genparam$ndttrialrange <- ndttrialrange
   genparam$deltatrialsd <- deltatrialsd
   genparam$prob_lapse <- prob_lapse
@@ -113,130 +107,89 @@ if (!file.exists(here("data", "genparam_test.RData"))) {
   genparam$nconds <- nconds
   genparam$ntrials <- ntrials
   genparam$N <- N
-  save(genparam, file = here("data", "genparam_reg_test.RData"))
+  save(genparam, file = here("data", "genparam_test.RData"))
 } else {
   # load dataset
-  load(here("data", "genparam_reg_test.RData"))
+  load(here("data", "genparam_test.RData"))
 }
 
-# Fit model to data
-y <- genparam$y
-rt <- genparam$rt
-participant <- genparam$participant
-condition <- genparam$condition
-nparts <- genparam$nparts
-nconds <- genparam$nconds
-regressors1 <- genparam$regressors1
-ntrials <- genparam$ntrials
-N <- genparam$N
-
-minrt <- matrix(rep(0, nparts * nconds), nrow = nparts, ncol = nconds)
-
-for (p in seq_len(nparts)) {
-  for (k in seq_len(nconds)) {
-    minrt[[p, k]] <- min(rt[(participant == p) & (condition == k)])
-  }
-}
-
-# Input for mixture modeling
-Ones <- rep(1, N)
-Constant <- 20
-
-datalist <- list(
-  y <- y,
-  N <- N,
-  nparts <- nparts,
-  nconds <- nconds,
-  condition <- condition,
-  participant <- participant,
-  regressors1 <- regressors1,
-  Ones <- Ones,
-  Constant <- Constant
-)
-
-# get names for the list
-names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "regressors1", "Ones", "Constant")
 
 # Set random seed
-set.seed(200)
+set.seed(2022)
 
 # JAGS code
 tojags <- "model {
-
+    
     ##########
-    #Between-condition variability priors
+    #Between-condition variability parameters priors
     ##########
 
-    #Between-condition variability in drift rate to correct
+    #Between-condition variability in drift rate to choice A
     deltasdcond ~ dgamma(1,1)
 
-    #Between-condition variability in non-decision time
-    ndtsdcond ~ dgamma(.3,1)
-
-    #Between-condition variability in speed-accuracy trade-off
-    alphasdcond ~ dgamma(1,1)
-
     ##########
-    #Between-participant variability priors
+    #Between-participant variability parameters priors
     ##########
+
+    #Between-participant variability in non-decision time
+    tersd ~ dgamma(.3,1)
+
+    #Between-participant variability in Speed-accuracy trade-off
+    alphasd ~ dgamma(1,1)
+
+    #Between-participant variability in choice A start point bias
+    betasd ~ dgamma(.3,1)
 
     #Between-participant variability in lapse trial probability
     problapsesd ~ dgamma(.3,1)
+
+    #Between-participant variability in drift rate to choice A
+    deltasd ~ dgamma(1,1)
 
     ##########
     #Hierarchical DDM parameter priors
     ##########
 
+    #Hierarchical Non-decision time
+    terhier ~ dnorm(.5, pow(.25,-2))
+
+    #Hierarchical boundary parameter (speed-accuracy tradeoff)
+    alphahier ~ dnorm(1, pow(.5,-2))
+
+    #Hierarchical start point bias towards choice A
+    betahier ~ dnorm(.5, pow(.25,-2))
+
     #Hierarchical lapse trial probability
     problapsehier ~ dnorm(.3, pow(.15,-2))
 
-    ##########
-    #Condition-level DDM parameter priors
-    ##########
-
-    for (c in 1:nconds) {
-
-        #Drift rate intercept
-        delta_int[c] ~ dnorm(0, pow(6, -2))
-
-        #Non-decision time intercept
-        ndt_int[c] ~ dnorm(0, pow(2,-2))
-
-        #Boundary parameter intercept
-        alpha_int[c] ~ dnorm(0, pow(4,-2))
-
-        #Effect of regressor1 on Drift rate
-        delta_gamma[c] ~ dnorm(0, pow(3, -2))
-
-        #Effect of regressor1 on Non-decision time
-        ndt_gamma[c] ~ dnorm(0, pow(1,-2))
-
-        #Effect of regressor1 on boundary parameter
-        alpha_gamma[c] ~ dnorm(0, pow(2,-2))
-
-
-    }
-
+    #Hierarchical drift rate to choice A
+    deltahier ~ dnorm(0, pow(2, -2))
 
     ##########
     #Participant-level DDM parameter priors
     ##########
     for (p in 1:nparts) {
 
+        #Non-decision time
+        ter[p] ~ dnorm(terhier, pow(tersd,-2))T(0, 1)
+
+        #Boundary parameter (speed-accuracy tradeoff)
+        alpha[p] ~ dnorm(alphahier, pow(alphasd,-2))T(0, 3)
+
+        #Rightward start point bias towards choice A
+        beta[p] ~ dnorm(betahier, pow(betasd,-2))T(0, 1)
+
         #Probability of a lapse trial
         problapse[p] ~ dnorm(problapsehier, pow(problapsesd,-2))T(0, 1)
         probDDM[p] <- 1 - problapse[p]
 
+        #Participant-level drift rate to choice A
+        deltapart[p] ~ dnorm(deltahier, pow(deltasd, -2))
+
         for (c in 1:nconds) {
 
-            #Participant-level drift rate to correct
-            delta[p,c] ~ dnorm(delta_int[c] + delta_gamma[c]*regressors1[p,c], pow(deltasdcond, -2))
-
-            #Non-decision time
-            ndt[p,c] ~ dnorm(ndt_int[c] + ndt_gamma[c]*regressors1[p,c], pow(ndtsdcond,-2))T(0, 1)
-
-            #Boundary parameter (speed-accuracy tradeoff)
-            alpha[p,c] ~ dnorm(alpha_int[c] + alpha_gamma[c]*regressors1[p,c], pow(alphasdcond,-2))T(0, 3)
+            #Participant-level drift rate to choice A
+            delta[p,c] ~ dnorm(deltapart[p], pow(deltasdcond, -2))
 
         }
 
@@ -247,14 +200,14 @@ tojags <- "model {
     for (i in 1:N) {
 
         # Log density for DDM process of rightward/leftward RT
-        ld_comp[i, 1] <- dlogwiener(y[i], alpha[participant[i],condition[i]], ndt[participant[i],condition[i]], .5, delta[participant[i],condition[i]])
+        ld_comp[i, 1] <- dlogwiener(y[i], alpha[participant[i]], ter[participant[i]], beta[participant[i]], delta[participant[i],condition[i]])
 
         # Log density for lapse trials (negative max RT to positive max RT)
         ld_comp[i, 2] <- logdensity.unif(y[i], -3, 3)
 
         # Select one of these two densities (Mixture of nonlapse and lapse trials)
         selected_density[i] <- exp(ld_comp[i, DDMorLapse[i]] - Constant)
-
+        
         # Generate a likelihood for the MCMC sampler using a trick to maximize density value
         Ones[i] ~ dbern(selected_density[i])
 
@@ -268,54 +221,80 @@ load.module("wiener")
 load.module("dic")
 list.modules()
 
-writeLines(tojags, here("jagscode", "regression_test.jags"))
+writeLines(tojags, here("jagscode", "recovery_test.jags"))
 
-nchains <- 4
-burnin <- 4000
-nsamps <- 20000
+nchains <- 3
+burnin <- 200
+nsamps <- 1000
 
-modelfile <- here("jagscode", "regression_test.jags")
+modelfile <- here("jagscode", "recovery_test.jags")
 
 # Track these variables
-jags_params <- c(
-  "deltasdcond", "ndtsdcond", "alphasdcond", "problapsesd",
-  "problapsehier", "delta_int", "ndt_int", "alpha_int",
-  "delta_gamma", "ndt_gamma", "alpha_gamma",
-  "delta", "ndt", "alpha", "problapse", "DDMorLapse"
+jags_params <- c("deltasdcond", 
+                 "tersd", "alphasd","betasd","problapsesd","deltasd",
+                 "terhier","alphahier","betahier","problapsehier","deltahier",
+                 "ter","alpha","beta","problapse","deltapart",
+                "delta","DDMorLapse")
+
+N <- genparam$N
+
+# Input for mixture modeling
+Ones <- rep(1, N)
+Constant <- 20
+
+# Fit model to data
+y <- genparam$y
+rt <- genparam$rt
+participant <- genparam$participant
+condition <- genparam$condition
+nparts <- genparam$nparts
+nconds <- genparam$nconds
+ntrials <- genparam$ntrials
+
+minrt <- rep(0, nparts)
+for (p in seq_len(nparts)) {
+  minrt[[p]] <- min(rt[(participant == p)])
+}
+
+datalist <- list(
+  y <- y,
+  N <- N,
+  nparts <- nparts,
+  nconds <- nconds,
+  condition <- condition,
+  participant <- participant,
+  Ones <- Ones,
+  Constant <- Constant
 )
-#Alternativly you can just track the variables to plot
-# jags_params <- c(
-#   "delta_int", "ndt_int", "alpha_int",
-#   "delta_gamma", "ndt_gamma", "alpha_gamma",
-#   "delta", "ndt", "alpha"
-# )
+
+# get names for the list
+names(datalist) <- c("y","N","nparts","nconds","condition","participant","Ones","Constant")
+
 
 initials <- vector(mode = "list")
 for (c in seq_len(nchains)) {
   initsList <- function() {
     chaininit <- vector(mode = "list")
     chaininit$deltasdcond <- runif(1, .1, 3)
-    chaininit$ndtsdcond <- runif(1, .01, .2)
-    chaininit$alphasdcond <- runif(1, .01, 1)
+    chaininit$tersd <- runif(1, .01, .2)
+    chaininit$alphasd <- runif(1, .01, 1.)
+    chaininit$betasd <- runif(1, .01, .2)
     chaininit$problapsesd <- runif(1, .01, .5)
-    chaininit$problapsehier <- runif(1, .01, .1)
-    chaininit$delta_int <- runif(nconds, -4., 4.)
-    chaininit$ndt_int <- runif(nconds, .1, .5)
-    chaininit$alpha_int <- runif(nconds, .5, 2)
-    chaininit$delta_gamma <- runif(nconds, -1, 1)
-    chaininit$ndt_gamma <- runif(nconds, -1, 1)
-    chaininit$alpha_gamma <- runif(nconds, -1, 1)
+    chaininit$deltasd <- runif(1, .1, 3.)
+    chaininit$deltapart <- runif(nparts, -4., 4.)
     chaininit$delta <- matrix(runif(nparts * nconds, -4., 4.), nrow = nparts, ncol = nconds)
-    chaininit$ndt <- matrix(runif(nparts * nconds, .1, .5), nrow = nparts, ncol = nconds)
-    chaininit$alpha <- matrix(runif(nparts * nconds, .5, 2.), nrow = nparts, ncol = nconds)
+    chaininit$ter <- runif(nparts, .1, .5)
+    chaininit$alpha <- runif(nparts, .5, 2.)
+    chaininit$beta <- runif(nparts, .2, .8)
     chaininit$problapse <- runif(nparts, .01, .1)
-    
+    chaininit$deltahier <- runif(1, -4., 4.)
+    chaininit$terhier <- runif(1, .1, .5)
+    chaininit$alphahier <- runif(1, .5, 2.)
+    chaininit$betahier <- runif(1, .2, .8)
+    chaininit$problapsehier <- runif(1, .01, .1)
     for (p in seq_len(nparts)) {
-      for (k in seq_len(nconds)) {
-        chaininit$ndt[[p, k]] <- runif(1, 0, minrt[[p, k]] / 2)
-      }
+      chaininit$ter[[p]] <- runif(1, 0, minrt[[p]] / 2)
     }
-    
     return(chaininit)
   }
   initials[[c]] <- initsList()
@@ -323,19 +302,16 @@ for (c in seq_len(nchains)) {
 
 print(paste0("Fitting model ..."))
 
-jagsfit <- jags(
+samples <- jags(
   model.file = modelfile,
   data = datalist, inits = initials, jags_params,
   n.iter = nsamps,
   n.chains = nchains,
-  n.burnin = burnin, jags.module = "wiener"
+  n.burnin = burnin, 
+  jags.module = "wiener"
 )
-
-samples <- update(jagsfit, n.iter = nsamps)
-
-savestring <- here("modelfits", "genparam_regression_test.Rdata")
+savestring <- here("modelfits", "genparam_test_model.Rdata")
 print(paste0("Saving results to: ", savestring))
-
 save(samples, file = savestring)
 
 # Diagnostics
@@ -344,14 +320,14 @@ samples
 
 # Posterior distributions
 
-# jellyfish(jagsfit, "delta")
-# 
-# jellyfish(jagsfit, "ndt")
-# 
-# jellyfish(jagsfit, "alpha")
+# jellyfish(samples, "delta")
+# # 
+# jellyfish(samples, "ter")
+# # 
+# jellyfish(samples, "alpha")
 # 
 # # Recovery
-# recovery(jagsfit, genparam["delta"])
+# recovery(samples, genparam["delta"])
 # 
 # recovery(jagsfit, genparam["ndt"])
 # 

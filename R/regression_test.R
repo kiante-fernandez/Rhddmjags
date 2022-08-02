@@ -44,7 +44,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
   nconds <- 3
 
   # Number of trials per participant and condition
-  ntrials <- 10
+  ntrials <- 50
 
   # Number of total trials in each simulation
   N <- ntrials * nparts * nconds

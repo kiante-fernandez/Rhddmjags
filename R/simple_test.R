@@ -212,11 +212,11 @@ jellyfish(samples, "beta","figures/beta_posteriors_simple.png")
 jellyfish(samples, "delta","figures/delta_posteriors_simple.png")
 
 # Recovery
-recovery(samples, genparam["alpha"], "alpha_recovery_simple.png")
+recovery(samples, genparam["alpha"], "figures/alpha_recovery_simple.png")
 
-recovery(samples, genparam["ndt"],"ndt_recovery_simple.png")
+recovery(samples, genparam["ndt"],"figures/ndt_recovery_simple.png")
 
-recovery(samples, genparam["beta"],"beta_recovery_simple.png")
+recovery(samples, genparam["beta"],"figures/beta_recovery_simple.png")
 
-recovery(samples, genparam["delta"],"delta_recovery_simple.png")
+recovery(samples, genparam["delta"],"figures/delta_recovery_simple.png")
 
