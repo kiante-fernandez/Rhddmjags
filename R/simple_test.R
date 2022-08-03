@@ -200,8 +200,8 @@ print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 # Diagnostics
-# for now just call the jags object Diagnostics() function soon to come!
-samples
+diags <- diagnostic(samples)
+
 # Posterior distributions
 jellyfish(samples, "alpha",filename = "figures/alpha_posteriors_simple.png")
 

@@ -24,6 +24,7 @@
 # ====         ================                       ======================
 # 20/07/2022    Kianté Fernandez                        Original code generation
 # 20/07/2022    Kianté  Fernandez                      added jelly and recovery plots
+# 02/08/2022    Kianté  Fernandez                      added Diagnostics
 
 
 # Libraries
@@ -40,7 +41,7 @@ source(here("R", "Rhddmjagsutils.R"))
 if (!file.exists(here("data", "simpleEEG_test.RData"))) {
 
   # Number of simulated participants
-  nparts <- 10
+  nparts <- 100
 
   # Number of trials per participant and condition
   ntrials <- 100
@@ -220,8 +221,8 @@ print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 # Diagnostics
-# for now just call the jags object Diagnostics() function soon to come!
-samples
+diags <- diagnostic(samples)
+
 # Posterior distributions
 jellyfish(samples, "alpha",filename = "figures/alpha_posteriors_simpleCPP.png")
 

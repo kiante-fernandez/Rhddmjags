@@ -23,9 +23,10 @@
 # 11/07/22      Kianté Fernandez                      Rewrote Joachim's translations
 # 13/07/22      Kianté Fernandez                      Jellyfish plot code
 # 20/07/22      Kianté Fernandez                      Recovery plot
+# 02/08/22      Kianté Fernandez                      Added Diagnostics function
 
 # Libraries
-#TODO add something to check install of packages and install them on call
+# TODO add something to check install of packages and install them on call
 
 library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
 library(tidyr) # Tidy Messy Data, CRAN v1.2.0
@@ -33,11 +34,12 @@ library(readr) # Read Rectangular Text Data, CRAN v2.1.1
 library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
 library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
-require(rjags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
+require(R2jags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
 library(ggstar)
 library(coda)
 library(gtools)
 
+# library(MCMCvis)
 
 ### Functions ###
 
@@ -268,9 +270,147 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   return(result)
 }
 
-diagnostic <- function(insamples) {
-  # THIS FUNCTION IS NOT DONE NOR WORKING YET, USING IT WILL BREAK, BC IT DOES NOT DO ANYTHING
-  insamples <- samps # for testing
+MCMCoutput <- function(object,
+                       params = "all",
+                       exclude = NULL,
+                       ISB = TRUE,
+                       exact = TRUE) {
+  # based on MCMCvis `MCMCchains` function:
+  # Youngflesh, C. (2018) MCMCvis: Tools to visualize, manipulate, and summarize MCMC output.
+  # Journal of Open Source Software, 3(24), 640, https://doi.org/10.21105/joss.00640
+  if (!methods::is(object, "rjags")) {
+    stop("Invalid object type.mcmc.list object (coda/rjags), rjags object (R2jags)")
+  }
+
+  temp_in <- object$BUGSoutput$sims.matrix
+  if (ISB == TRUE) {
+    names <- vapply(strsplit(rownames(object$BUGSoutput$summary),
+      split = "[", fixed = TRUE
+    ), `[`, 1, FUN.VALUE = character(1))
+  } else {
+    names <- rownames(object$BUGSoutput$summary)
+  }
+
+  if (!is.null(exclude)) {
+    rm_ind <- c()
+    for (i in 1:length(exclude))
+    {
+      if (ISB == TRUE) {
+        n_excl <- vapply(strsplit(exclude,
+          split = "[", fixed = TRUE
+        ), `[`, 1, FUN.VALUE = character(1))
+      } else {
+        n_excl <- exclude
+      }
+
+      if (exact == TRUE) {
+        ind_excl <- which(names %in% n_excl[i])
+      } else {
+        ind_excl <- grep(n_excl[i], names, fixed = FALSE)
+      }
+
+      if (length(ind_excl) < 1) {
+        warning(paste0("\"", exclude[i], "\"", " not found in MCMC output. Check 'ISB' and 'exact' arguments to make sure the desired parsing methods are being used."))
+      }
+      rm_ind <- c(rm_ind, ind_excl)
+    }
+    if (length(rm_ind) > 0) {
+      dups <- which(duplicated(rm_ind))
+      if (length(dups) > 0) {
+        rm_ind2 <- rm_ind[-dups]
+      } else {
+        rm_ind2 <- rm_ind
+      }
+    } else {
+      exclude <- NULL
+    }
+  }
+
+  if (length(params) == 1) {
+    if (params == "all") {
+      if (is.null(exclude)) {
+        f_ind <- 1:length(names)
+      } else {
+        f_ind <- (1:length(names))[-rm_ind2]
+      }
+    } else {
+      if (exact == TRUE) {
+        get_ind <- which(names %in% params)
+      } else {
+        get_ind <- grep(paste(params), names, fixed = FALSE)
+      }
+
+      if (length(get_ind) < 1) {
+        stop(paste0("\"", params, "\"", " not found in MCMC output. Check `ISB` and `exact` arguments to make sure the desired parsing methods are being used."))
+      }
+      if (!is.null(exclude)) {
+        if (identical(get_ind, rm_ind2)) {
+          stop("No parameters selected.")
+        }
+        matched <- stats::na.omit(match(rm_ind2, get_ind))
+        if (length(matched) > 0) {
+          f_ind <- get_ind[-matched]
+        } else {
+          f_ind <- get_ind
+        }
+      } else {
+        f_ind <- get_ind
+      }
+    }
+  } else {
+    grouped <- c()
+    for (i in 1:length(params))
+    {
+      if (exact == TRUE) {
+        get_ind <- which(names %in% params[i])
+      } else {
+        get_ind <- grep(paste(params[i]), names, fixed = FALSE)
+      }
+
+      if (length(get_ind) < 1) {
+        warning(paste0("\"", params[i], "\"", " not found in MCMC output. Check 'ISB' and 'exact' arguments to make sure the desired parsing methods are being used."))
+        next()
+      }
+      grouped <- c(grouped, get_ind)
+    }
+    if (!is.null(exclude)) {
+      if (identical(grouped, rm_ind2)) {
+        stop("No parameters selected.")
+      }
+      matched <- stats::na.omit(match(rm_ind2, grouped))
+      if (length(matched) > 0) {
+        t_ind <- grouped[-matched]
+      } else {
+        t_ind <- grouped
+      }
+      to.rm <- which(duplicated(t_ind))
+      if (length(to.rm) > 0) {
+        f_ind <- t_ind[-to.rm]
+      } else {
+        f_ind <- t_ind
+      }
+    } else {
+      to.rm <- which(duplicated(grouped))
+      if (length(to.rm) > 0) {
+        f_ind <- grouped[-to.rm]
+      } else {
+        f_ind <- grouped
+      }
+    }
+  }
+  OUT <- temp_in[, f_ind, drop = FALSE]
+
+  return(OUT)
+}
+
+diagnostic <- function(object,
+                       params = "all",
+                       exclude = NULL,
+                       ISB = TRUE,
+                       exact = TRUE) {
+  # based on MCMCvis `MCMCsummary` function:
+  # Youngflesh, C. (2018) MCMCvis: Tools to visualize, manipulate, and summarize MCMC output.
+  # Journal of Open Source Software, 3(24), 640, https://doi.org/10.21105/joss.00640
 
   # Returns two versions of Rhat (measure of convergence, less is better with an approximate
   # 1.10 cutoff) and Neff, number of effective samples). Note that 'rhat' is more diagnostic than 'oldrhat' according to
@@ -288,80 +428,85 @@ diagnostic <- function(insamples) {
   #
   # Parameters
   # ----------
-  # insamples: array
-  # Sampled values of monitored variables as an array of size
-  #  variable by dim_1, dim_n, iterations, chains
-  # dim_1, ..., dim_n describe the shape of variable in JAGS model.
+  # object: rjags object
   #
   # Returns
   # -------
   # list:
   #     rhat, oldrhat, neff, posterior mean, and posterior std for each variable. Prints maximum Rhat and minimum Neff across all variables
+  # or ..should I do a dataframe...?
+  object2 <- MCMCoutput(object, params, exclude, ISB, exact = exact)
+  np <- NCOL(object2[[1]])
+  if (np > 1) ch_bind <- do.call("rbind", object2) else ch_bind <- as.matrix(object2)
 
-  result <- list()
+  x <- list()
 
-  maxrhatsold <- rep(0, length(attributes(insamples)$dimnames$var))
-  maxrhatsnew <- rep(0, length(attributes(insamples)$dimnames$var))
-  minneff <- rep(0, length(attributes(insamples)$dimnames$var))
+  # mean, sd, and quantiles
+  bind_mn <- data.frame(apply(ch_bind, 2, mean))
+  bind_sd <- data.frame(apply(ch_bind, 2, stats::sd))
+  colnames(bind_mn) <- "mean"
+  colnames(bind_sd) <- "sd"
 
-  var_rec <- table(factor(gsub("\\[|\\]|[0-9]+", "", attributes(insamples)$dimnames$var)))
-  keys <- names(var_rec)
-  var_order <- factor(gsub("\\[|\\]|[0-9]+", "", attributes(insamples)$dimnames$var))
+  probs <- c(0.025, 0.5, 0.975)
+  bind_q <- data.frame(t(apply(ch_bind, 2, stats::quantile, probs = probs)))
+  colnames(bind_q) <- paste0(signif(probs * 100, digits = 3), "%")
 
-  var_order[var_order == keys[1]]
+  x[[1]] <- cbind(bind_mn, bind_sd, bind_q)
 
-  for (key_idx in seq_len(length(keys))) {
-    result[[key_idx]] <- list()
-
-    possamps <- insamples[, which(var_order == keys[key_idx]), ]
-    dim(possamps)
-    # Number of chains
-    nchains <- dim(possamps)[[3]]
-
-    # Number of samples per chain
-    nsamps <- dim(possamps)[[1]]
-
-    # Number of variables per key
-    nvars <- dim(possamps)[[2]]
-
-    # Reshape data
-    allsamps <- apply(possamps, 1, c)
-    dim(allsamps)
-
-    # Reshape data to preduce R_hatnew
-    possampsnew <- array(0, c(nvars, nsamps / 2, nchains * 2))
-    newc <- 1
-    dim(possamps)
-    dim(possampsnew)
-    for (chain_idx in seq_len(nchains)) {
-      # possampsnew[,,newc] = (((possamps,seq_len(nsamps/2),axis=-2),chain_idx
-      # possampsnew[,,newc + ] = (((possamps,seq_len(nsamps/2),axis=-2),chain_idx)
-      # this needs to be checked
-      possampsnew[, , newc] <- possamps[seq_len(nsamps / 2), , 1]
-      possampsnew[, , newc + 1] <- possamps[seq_len(nsamps / 2), , 1]
-      newc <- newc + 1
-
-      # Index of variables
-      varindx <- which(var_order == keys[key_idx])
-
-      # Reshape data (all aperm not working?)
-      # alldata <-  aperm(possamps, c(nvars, nsamps, nchains))
-
-      # Mean of each chain for rhat
-      chainmeans <- apply(possamps, 3, mean)
-      # Mean of each chain for rhatnew
-      chainmeansnew <- apply(possampsnew, 3, mean)
-      # Global mean of each parameter for rhat
-      globalmean <- mean(chainmeans)
-      globalmeannew <- mean(chainmeansnew)
-      result[[1]]$mean <- globalmean
-      result[[1]]$std <- apply(allsamps, 1, std)
+  exl_names <- vapply(strsplit(rownames(object$BUGSoutput$summary),
+    split = "[", fixed = TRUE
+  ), `[`, 1, FUN.VALUE = character(1))
+  # rhat
+  if (!methods::is(object, "matrix")) {
+    if (length(object2) > 1) {
+      # If > 750 params use loop to calculate Rhat
+      if (NCOL(object2[[1]]) > 750) {
+        object3 <- as.mcmc(object)
+        r_hat <- c(rep(NA, NCOL(object3[[1]])))
+        for (v in 1:length(r_hat)) r_hat[v] <- round(coda::gelman.diag(object3[, v])$psrf[, 1], digits = 2)
+        r_hat <- data.frame(r_hat[exl_names != exclude, ])
+        colnames(r_hat) <- "Rhat"
+      } else {
+        r_hat <- data.frame(round(coda::gelman.diag(as.mcmc(object), multivariate = FALSE)$psrf[, 1], digits = 2))
+        r_hat <- data.frame(r_hat[exl_names != exclude, ])
+        colnames(r_hat) <- "Rhat"
+      }
+    } else {
+      warning("Rhat statistic cannot be calculated with one chain. NAs inserted.")
+      r_hat <- data.frame(rep(NA, np))
+      r_hat <- data.frame(r_hat[exl_names != exclude, ])
+      colnames(r_hat) <- "Rhat"
     }
+  } else {
+    warning("Rhat statistic cannot be calculated with one chain (matrix input). NAs inserted.")
+    r_hat <- data.frame(rep(NA, np))
+    colnames(r_hat) <- "Rhat"
   }
+  x[[(length(x) + 1)]] <- r_hat
+
+
+  # neff
+  if (!methods::is(object, "matrix")) {
+    neff <- data.frame(round(coda::effectiveSize(object2), digits = 0))
+    colnames(neff) <- "n.eff"
+  } else {
+    warning("Number of effective samples cannot be calculated without individual chains (matrix input). NAs inserted.")
+    neff <- data.frame(rep(NA, np))
+    colnames(neff) <- "n.eff"
+  }
+  x[[(length(x) + 1)]] <- neff
+
+  # bind them
+  mcmc_summary <- do.call("cbind", x)
+
+  max_rhat <- mcmc_summary[which.max(mcmc_summary$Rhat), ]
+  print(paste0("Maximum Rhat was ", max_rhat$Rhat, " for variable ", row.names(max_rhat), " at index ", which.max(mcmc_summary$Rhat)))
+  min_n.eff <- mcmc_summary[which.min(mcmc_summary$n.eff), ]
+  print(paste0("Minimum number of effective samples was ", min_n.eff$n.eff, " for variable ", row.names(min_n.eff), " at index ", which.min(mcmc_summary$n.eff)))
+
+  return(round(mcmc_summary, 4))
 }
 
-#testing
-# parameter = "delta"
 jellyfish <- function(samples, parameter, filename = NULL) {
   #   Plots posterior distributions of given posterior samples in a jellyfish
   #   plot. Jellyfish plots are posterior distributions (mirrored over their
@@ -381,7 +526,7 @@ jellyfish <- function(samples, parameter, filename = NULL) {
     density(as.numeric(v))[["x"]][temp_idx]
   }
   ## if sample_dat  is the model output from R2jags
-  sample_dat <- as.data.frame(as.matrix(as.mcmc(samples)))
+  sample_dat <- as.data.frame(MCMCoutput(samples, params = parameter))
 
   ## name your predicted factor latent.mean, and the CI between latent.lower and latent.upper
   post_mean <- apply(sample_dat, 2, mean)
@@ -396,12 +541,8 @@ jellyfish <- function(samples, parameter, filename = NULL) {
   subject <- colnames(sample_dat)
   # create data frame of statistics to plot
   dat <- data.frame(post_mean, post_median, post_mode, post_lower1, post_upper1, post_lower2, post_upper2, subject)
-  # remove white space and symbols for indexing
-  var_order <- factor(gsub("[[:punct:]]", "", gsub("\\[|\\]|[0-9]+", "", rownames(dat))))
-  # select the parameters of interest to plot:
-  plt_data <- dat[which(var_order == parameter), ]
   # order the data by the posterior MAPS, for better visualization
-  plt_data <- plt_data[order(plt_data$post_mean), ]
+  plt_data <- dat[order(dat$post_mean), ]
   # order the observation IDs
   plt_data$subject2 <- reorder(plt_data$subject, plt_data$post_mean)
   # get the title of the plot
@@ -426,7 +567,9 @@ jellyfish <- function(samples, parameter, filename = NULL) {
   return(jellyplot)
 }
 
-# truevals = genparam["ter"]
+# truevals <- genparam["delta_int"]
+# truevals <- genparam["delta"]
+
 recovery <- function(samples, truevals, filename = NULL) {
   # Plots true parameters versus 99% and 95% credible intervals of recovered
   # parameters. Also plotted are the median (circles) and mean (stars) of the posterior
@@ -437,44 +580,45 @@ recovery <- function(samples, truevals, filename = NULL) {
   # samples : samples the rjags object
   # truevals :List of true parameter values (the genparam list)
   # filename: optional
-  
+
   true_paramname <- names(truevals)
-  
+
   ## if sample_dat  is the model output from R2jags
-  sample_dat <- as.data.frame(as.matrix(as.mcmc(samples)))
-  
+  sample_dat <- as.data.frame(MCMCoutput(samples, params = true_paramname))
+
   ## name your predicted factor and the CI between lower and upper
   post_mean <- apply(sample_dat, 2, mean)
   post_median <- apply(sample_dat, 2, median)
-  
+
   # get the intervals
   post_lower1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.025)))
   post_upper1 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.975)))
   post_lower2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.005)))
   post_upper2 <- apply(sample_dat, 2, function(x) quantile(x, probs = c(0.995)))
-  
+
   # get parameter names
   paramname <- colnames(sample_dat)
-  
+
   # create data frame of statistics to plot
   dat <- data.frame(post_mean, post_median, post_lower1, post_upper1, post_lower2, post_upper2, paramname)
-  # remove white space and symbols for indexing
-  var_order <- factor(gsub("[[:punct:]]", "", gsub("\\[|\\]|[0-9]+", "", rownames(dat))))
-  # select the parameters of interest to plot:
-  plt_data <- dat[which(var_order == true_paramname), ]
-  plt_data <- plt_data[mixedsort(sort(plt_data$paramname)), ] # sort data in "correct order"
-  plt_data$truevals <- as.vector(t(truevals[[1]]))
-  
+  # sort data in "correct order"
+  plt_data <- dat[mixedsort(sort(dat$paramname)), ]
+  # add true values to df
+  if (length(as.vector(t(truevals[[1]]))) == dim(plt_data)[[1]]) {
+    plt_data$truevals <- as.vector(t(truevals[[1]]))
+  } else {
+    plt_data$truevals <- apply(truevals[[1]], 2, mean)
+  }
   ## order the data by the posterior MAPS, for better visualization
   plt_data <- plt_data[order(plt_data$post_mean), ]
-  
+
   ## order the observation IDs
   plt_data$paramname2 <- reorder(plt_data$paramname, plt_data$post_mean)
   ## get y = x for plotting
   plt_data$recoverline <- seq(min(plt_data$truevals), max(plt_data$truevals), length.out = nrow(plt_data))
 
   title <- paste0("Recovery of the ", true_paramname)
-  
+
   ## make plot using the ggplot:
   recover_plot <- ggplot(plt_data, aes(x = truevals, y = post_mean)) +
     geom_segment(aes(x = truevals, xend = truevals, y = post_lower2, yend = post_upper2), color = "cyan2", size = 1) +
@@ -484,7 +628,7 @@ recovery <- function(samples, truevals, filename = NULL) {
     labs(title = title, x = "", y = "") +
     theme_classic() +
     geom_line(aes(x = recoverline, y = recoverline), color = "darkorange", size = 2)
-  
+
   if (!is.null(filename)) {
     recover_plot
     ggsave(filename, dpi = 300)

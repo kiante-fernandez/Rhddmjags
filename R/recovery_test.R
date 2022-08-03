@@ -25,7 +25,6 @@
 # 01/08/2022    Kianté Fernandez                        Original code generation
 
 
-
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
 library(R2jags) # jags.parallel is part of R2jags
@@ -316,8 +315,7 @@ print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 # Diagnostics
-# for now just call the jags object Diagnostics() function soon to come!
-samples
+diags <- diagnostic(samples, exclude = "DDMorLapse")
 
 # Posterior distributions
 
@@ -328,7 +326,7 @@ jellyfish(samples, "ter","figures/ter_posteriors_model.png")
 jellyfish(samples, "beta","figures/beta_posteriors_model.png")
 
 jellyfish(samples, "alpha","figures/alpha_posteriors_model.png")
-# 
+
 # Recovery
 recovery(samples, genparam["delta"],"figures/delta_recovery_model.png")
 

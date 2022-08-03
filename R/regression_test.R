@@ -22,7 +22,8 @@
 # 11/07/22      Kianté  Fernandez                      Starting coding
 # 13/07/22      Kianté  Fernandez                      Completed Buggs code
 # 20/07/22      Kianté  Fernandez                      added jelly and recovery plots
-# 01/08/22      Kianté  Fernandez                      fixed laspse trial bug
+# 01/08/22      Kianté  Fernandez                      fixed lapse trial bug
+# 02/08/22      Kianté  Fernandez                      added diagnostic
 
 
 # Libraries
@@ -39,10 +40,10 @@ source(here("R", "Rhddmjagsutils.R"))
 if (!file.exists(here("data", "genparam_reg_test.RData"))) {
 
   # Number of simulated participants
-  nparts <- 10
+  nparts <- 40
 
   # Number of conditions
-  nconds <- 3
+  nconds <- 6
 
   # Number of trials per participant and condition
   ntrials <- 50
@@ -51,7 +52,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
   N <- ntrials * nparts * nconds
 
   # Set random seed
-  set.seed(200)
+  set.seed(2022)
 
   # Intercepts of linear regressions
   ndt_int <- matrix(rep(runif(nconds, .4, .7), nparts), nrow = nparts, ncol = nconds) # Uniform from .4 to .7 seconds
@@ -92,7 +93,7 @@ if (!file.exists(here("data", "genparam_reg_test.RData"))) {
       mindwanderx <- sample(0:2, ntrials, replace = T) * 2 - 1
       mindwandert <- runif(n = ntrials, 0, 2) # Randomly distributed from 0 to 2 seconds
 
-      mindwander_trials <- sample(1:ntrials, size =as.integer(round(ntrials*(prob_lapse[[p]] / 100))), replace = F)
+      mindwander_trials <- sample(1:ntrials, size = as.integer(round(ntrials * (prob_lapse[[p]] / 100))), replace = F)
       tempx[mindwander_trials] <- mindwanderx[mindwander_trials]
       tempt[mindwander_trials] <- mindwandert[mindwander_trials]
       y[indextrack] <- tempx * tempt
@@ -172,7 +173,7 @@ datalist <- list(
 names(datalist) <- c("y", "N", "nparts", "nconds", "condition", "participant", "regressors1", "Ones", "Constant")
 
 # Set random seed
-set.seed(200)
+set.seed(2022)
 
 # JAGS code
 tojags <- "model {
@@ -284,9 +285,9 @@ list.modules()
 
 writeLines(tojags, here("jagscode", "regression_test.jags"))
 
-nchains <- 3
-burnin <- 200
-nsamps <- 1000
+nchains <- 6
+burnin <- 4000
+nsamps <- 20000
 
 modelfile <- here("jagscode", "regression_test.jags")
 
@@ -297,12 +298,6 @@ jags_params <- c(
   "delta_gamma", "ndt_gamma", "alpha_gamma",
   "delta", "ndt", "alpha", "problapse", "DDMorLapse"
 )
-#Alternativly you can just track the variables to plot
-# jags_params <- c(
-#   "delta_int", "ndt_int", "alpha_int",
-#   "delta_gamma", "ndt_gamma", "alpha_gamma",
-#   "delta", "ndt", "alpha"
-# )
 
 initials <- vector(mode = "list")
 for (c in seq_len(nchains)) {
@@ -337,50 +332,43 @@ for (c in seq_len(nchains)) {
 
 print(paste0("Fitting model ..."))
 
-jagsfit <- jags(
+samples <- jags(
   model.file = modelfile,
   data = datalist, inits = initials, jags_params,
   n.iter = nsamps,
   n.chains = nchains,
+  n.thin = 10,
   n.burnin = burnin, jags.module = "wiener"
 )
-
-samples <- update(jagsfit, n.iter = nsamps)
-
 savestring <- here("modelfits", "genparam_regression_test.Rdata")
 print(paste0("Saving results to: ", savestring))
-
 save(samples, file = savestring)
 
 # Diagnostics
-# for now just call the jags object Diagnostics() function soon to come!
-samples
+diags <- diagnostic(samples, exclude = "DDMorLapse")
 
 # Posterior distributions
+jellyfish(samples, "delta", "figures/delta_posteriors_model.png")
 
-jellyfish(jagsfit, "delta")
-# 
-jellyfish(jagsfit, "ndt")
-# 
-jellyfish(jagsfit, "alpha")
-# 
-# # Recovery
-recovery(jagsfit, genparam["delta"])
-# 
-# recovery(jagsfit, genparam["ndt"])
-# 
-# recovery(jagsfit, genparam["alpha"])
-# 
-# recovery(samples, genparam["delta_int"])
-# 
-# recovery(jagsfit, genparam["ndt_int"])
-# 
-# # recovery(samples, genparam["alpha_int"])
-# 
-# recovery(jagsfit, genparam["delta_gamma"])
-# 
-# recovery(samples, genparam["ndt_gamma"])
-# 
-# recovery(samples, genparam["alpha_gamma"])
+jellyfish(samples, "ndt", "figures/ndt_posteriors_model.png")
 
+jellyfish(samples, "alpha", "figures/alpha_posteriors_model.png")
 
+# Recovery
+recovery(samples, genparam["delta"], "figures/delta_recovery_model.png")
+
+recovery(samples, genparam["ndt"], "figures/ndt_recovery_model.png")
+
+recovery(samples, genparam["alpha"], "figures/alpha_recovery_model.png")
+
+recovery(samples, genparam["delta_int"], "figures/delta_int_recovery_model.png")
+
+recovery(samples, genparam["ndt_int"], "figures/ndt_int_recovery_model.png")
+
+recovery(samples, genparam["alpha_int"], "figures/alpha_int_recovery_model.png")
+
+recovery(samples, genparam["delta_gamma"], "figures/delta_gamma_recovery_model.png")
+
+recovery(samples, genparam["ndt_gamma"], "figures/ndt_gamma_recovery_model.png")
+
+recovery(samples, genparam["alpha_gamma"], "figures/alpha_gamma_recovery_model.png")
