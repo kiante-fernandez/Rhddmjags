@@ -22,7 +22,7 @@
 # 06/07/22      Kianté  Fernandez                 Rewrote python code for generate data
 # 11/07/22      Kianté  Fernandez                 started Jags code Re-coding
 # 13/07/22      Kianté  Fernandez                 fixed the initialization of chains lists
-# 20/07/22      Kianté  Fernandez                Added plotting code
+# 20/07/22      Kianté  Fernandez                 Added plotting code
 
 
 # Libraries

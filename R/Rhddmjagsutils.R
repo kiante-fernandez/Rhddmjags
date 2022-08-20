@@ -507,7 +507,7 @@ diagnostic <- function(object,
   return(round(mcmc_summary, 4))
 }
 
-jellyfish <- function(samples, parameter, filename = NULL) {
+jellyfish <- function(samples, parameter, reorder = FALSE, filename = NULL) {
   #   Plots posterior distributions of given posterior samples in a jellyfish
   #   plot. Jellyfish plots are posterior distributions (mirrored over their
   #   horizontal axes) with 99% and 95% credible intervals (currently plotted
@@ -544,7 +544,11 @@ jellyfish <- function(samples, parameter, filename = NULL) {
   # order the data by the posterior MAPS, for better visualization
   plt_data <- dat[order(dat$post_mean), ]
   # order the observation IDs
-  plt_data$subject2 <- reorder(plt_data$subject, plt_data$post_mean)
+  if(reorder == TRUE){
+    plt_data$subject2 <- reorder(plt_data$subject, plt_data$post_mean)
+  }else {
+    plt_data$subject2 <- plt_data$subject
+  }
   # get the title of the plot
   title <- paste0("Posterior distributions of ", parameter, " parameter")
   # make plot using the ggplot:
