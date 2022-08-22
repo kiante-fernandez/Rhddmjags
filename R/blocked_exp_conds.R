@@ -21,6 +21,7 @@
 # Date            Programmers                         Descriptions of Change
 # ====         ================                       ======================
 # 20/08/2022    Kianté Fernandez                        Original code
+# 20/08/2022    Kianté Fernandez                        Plot and summary code
 
 # Libraries
 library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
@@ -36,13 +37,13 @@ source(here("R", "Rhddmjagsutils.R")) #make sure you have correct installs
 if (!file.exists(here("data", "blocked_genparam_test.RData"))) {
   
   # Number of simulated participants
-  nparts <- 40
+  nparts <- 50
   
   # Number of conditions
   nconds <- 6
   
   # Number of trials per participant and condition
-  ntrials <- 50
+  ntrials <- 100
   
   # Number of total trials in each simulation
   N <- ntrials * nparts * nconds
@@ -271,6 +272,8 @@ nchains <- 6
 burnin <- 2000
 nsamps <- 10000
 
+modelfile <- here("jagscode", "blocked_exp_conds.jags")
+
 # Track these variables
 jags_params <- c('deltasdcond', 'tersdcond', 'alphasdcond',
   'deltasd', 'tersd', 'alphasd', 'problapsesd',
@@ -305,7 +308,7 @@ for (c in seq_len(nchains)) {
     
     for (p in seq_len(nparts)) {
       for (k in seq_len(nconds)) {
-        chaininit$ndt[[p, k]] <- runif(1, 0, minrt[[p, k]] / 2)
+        chaininit$ter[[p, k]] <- runif(1, 0, minrt[[p, k]] / 2)
       }
     }
     
@@ -321,14 +324,29 @@ samples <- jags(
   n.iter = nsamps,
   n.chains = nchains,
   n.thin = 10,
-  n.burnin = burnin, jags.module = "wiener"
+  n.burnin = burnin, 
+  jags.module = "wiener"
 )
 savestring <- here("modelfits", "genparam_test_model2.Rdata")
 print(paste0("Saving results to: ", savestring))
 save(samples, file = savestring)
 
 #Diagnostics
-diags <- diagnostic(samples, exclude = "DDMorLapse")
+diags <- diagnostic(samples, exclude = c("DDMorLapse"))
 
 #Parameter estimates
+print(paste0('The median posterior drift-rate (evidence units / sec) for participant 1 in condition 1 is ', round(median(samples$BUGSoutput$sims.list$delta[,1,1]),4) ,      ' with 95%% credible interval (',round(quantile(samples$BUGSoutput$sims.list$delta[,1,1], c(2.5)/100),4), ',',round(quantile(samples$BUGSoutput$sims.list$delta[,1,1], c(97.5)/100),4), ')'))
+print(paste0('The median posterior non-decision time (sec) for participant 1 in condition 1 is ', round(median(samples$BUGSoutput$sims.list$ter[,1,1]),4) ,      ' with 95%% credible interval (',round(quantile(samples$BUGSoutput$sims.list$ter[,1,1], c(2.5)/100),4), ',',round(quantile(samples$BUGSoutput$sims.list$ter[,1,1], c(97.5)/100),4), ')'))
+print(paste0('The median posteriorboundary (evidence units) for participant 1 in condition 1 is ', round(median(samples$BUGSoutput$sims.list$alpha[,1,1]),4) ,      ' with 95%% credible interval (',round(quantile(samples$BUGSoutput$sims.list$alpha[,1,1], c(2.5)/100),4), ',',round(quantile(samples$BUGSoutput$sims.list$alpha[,1,1], c(97.5)/100),4), ')'))
+
+#Posterior distributions
+jellyfish(samples, "delta",filename = "figures/delta_posteriors_blocked_exp.png")
+
+jellyfish(samples, "ter",filename = "figures/ter_posteriors_blocked_exp.png")
+
+jellyfish(samples, "alpha",filename = "figures/alpha_posteriors_blocked_exp.png")
+
+#Find posterior probability of each trial being from a lapse process
+
+
 
