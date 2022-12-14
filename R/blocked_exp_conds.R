@@ -40,7 +40,7 @@ if (!file.exists(here("data", "blocked_genparam_test.RData"))) {
   nparts <- 50
   
   # Number of conditions
-  nconds <- 6
+  nconds <- 4
   
   # Number of trials per participant and condition
   ntrials <- 100

@@ -142,7 +142,7 @@ nchains <- 6
 burnin <- 2000
 nsamps <- 10000
 
-modelfile <- here("jagscode", "simpleCPP_test.jags")
+modelfile <- here("jagscode", "simple_test.jags")
 
 # Track these variables
 jags_params <- c("alpha", "ndt", "beta", "delta")

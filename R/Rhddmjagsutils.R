@@ -1,4 +1,4 @@
-# Rhddmjagsutils.py - Functions for simulation, model diagnostics, and parameter recovery
+# Rhddmjagsutils.R - Functions for simulation, model diagnostics, and parameter recovery
 #
 # Copyright (C) 2022 Kianté Fernandez, <kiantefernan@gmail.com>
 #
@@ -40,6 +40,11 @@ library(coda)
 library(gtools)
 
 # library(MCMCvis)
+
+Info = "Fernandez, A. K. (2022). Utility Functions for simulation, model diagnostics, and parameter recovery of Hierarchical Bayesian parameter estimation of the Drift Diffusion Model in R and jags."
+bannerBreak = "\n********************************************************************************************************\n"
+cat(paste0(bannerBreak,Info,bannerBreak,"\n"))
+
 
 ### Functions ###
 
@@ -566,7 +571,7 @@ jellyfish <- function(samples, parameter, reorder = FALSE, filename = NULL) {
 
   if (!is.null(filename)) {
     jellyplot
-    ggsave(filename, dpi = 300)
+    ggsave(filename, dpi = 300, width = 8, height = 13)
   }
   return(jellyplot)
 }
