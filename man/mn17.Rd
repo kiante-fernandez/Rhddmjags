@@ -9,6 +9,7 @@ A data frame with 9180 observations of 10 variables.
 \describe{
 \item{subject}{indicating the subject number.}
 \item{rt}{The response time, in milliseconds.}
+\item{correct}{whether the response was correct (1) or incorrect (0).}
 \item{jitter}{amount of temporal jitter introduced into the stimuli, in milliseconds.}
 \item{noise}{amount of visual noise added to the stimuli, as a percentage of maximum contrast.}
 \item{n200trialerp_c1r}{N200 ERP component amplitude for responses.}

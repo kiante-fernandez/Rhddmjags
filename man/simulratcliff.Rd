@@ -17,7 +17,23 @@ simulratcliff(
 )
 }
 \arguments{
-\item{Varsigma}{}
+\item{N}{a integer denoting the size of the output vector (defaults to 100 experimental trials)}
+
+\item{Alpha}{the mean boundary separation across trials  in evidence units (defaults to 1 evidence unit)}
+
+\item{Tau}{the mean non-decision time across trials in seconds (defaults to .4 seconds)}
+
+\item{Nu}{the mean drift rate across trials in evidence units per second (defaults to 1 evidence units per second, restricted to -5 to 5 units)}
+
+\item{Beta}{Beta: the initial bias in the evidence process for choice A as a proportion of boundary Alpha (defaults to .5 or 50\% of total evidence units given by Alpha)}
+
+\item{rangeTau}{Non-decision time across trials is generated from a uniform distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials (defaults to 0 seconds)}
+
+\item{rangeBeta}{Bias across trials is generated from a uniform distribution of Beta - rangeBeta/2 to Beta + rangeBeta/2 across trials (defaults to 0 evidence units)}
+
+\item{Eta}{Standard deviation of the drift rate across trials (defaults to 3 evidence units per second, restricted to less than 3 evidence units)}
+
+\item{Varsigma}{The diffusion coefficient, the standard deviation of the evidence accumulation process within one trial. It is recommended that this parameter be kept fixed unless you have reason to explore this parameter (defaults to 1 evidence unit per second)}
 }
 \value{
 Vector with reaction times (in seconds) multiplied by the response vector such that negative reaction times encode response B and positive reaction times encode response A

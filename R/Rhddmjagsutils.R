@@ -31,7 +31,7 @@ cat(paste0(bannerBreak,Info,bannerBreak,"\n"))
 
 #' Simulate Ratcliff diffusion model
 #'
-#' @description Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
+#' @description Ratcliff diffusion models slowly with intrinsic trial-to-trial variability in parameters
 #' @param N a integer denoting the size of the output vector (defaults to 100 experimental trials)
 #' @param Alpha the mean boundary separation across trials  in evidence units (defaults to 1 evidence unit)
 #' @param Tau the mean non-decision time across trials in seconds (defaults to .4 seconds)
@@ -101,15 +101,15 @@ simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5,
 #'  Converted from simuldiff.m MATLAB script by Joachim Vandekerckhove,
 #'  Then converted from pyhddmjags utils python script by Kianté Fernandez
 #'  See also http://ppw.kuleuven.be/okp/dmatoolbox.
-#' @param N
-#' @param Alpha
-#' @param Tau
-#' @param Nu
-#' @param Beta
-#' @param rangeTau
-#' @param rangeBeta
-#' @param Eta
-#' @param Varsigma
+#' @param N a integer denoting the size of the output vector (defaults to 100 experimental trials)
+#' @param Alpha the mean boundary separation across trials  in evidence units (defaults to 1 evidence unit)
+#' @param Tau the mean non-decision time across trials in seconds (defaults to .4 seconds)
+#' @param Nu the mean drift rate across trials in evidence units per second (defaults to 1 evidence units per second, restricted to -5 to 5 units)
+#' @param Beta Beta: the initial bias in the evidence process for choice A as a proportion of boundary Alpha (defaults to .5 or 50% of total evidence units given by Alpha)
+#' @param rangeTau Non-decision time across trials is generated from a uniform distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials (defaults to 0 seconds)
+#' @param rangeBeta Bias across trials is generated from a uniform distribution of Beta - rangeBeta/2 to Beta + rangeBeta/2 across trials (defaults to 0 evidence units)
+#' @param Eta Standard deviation of the drift rate across trials (defaults to 3 evidence units per second, restricted to less than 3 evidence units)
+#' @param Varsigma The diffusion coefficient, the standard deviation of the evidence accumulation process within one trial. It is recommended that this parameter be kept fixed unless you have reason to explore this parameter (defaults to 1 evidence unit per second)
 #'
 #' @return Vector with reaction times (in seconds) multiplied by the response vector such that negative reaction times encode response B and positive reaction times encode response A
 #' @export
@@ -122,39 +122,6 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   # Ratcliff, R., & De Boeck, P. (2001). A comparison of four methods for
   # simulating the diffusion process. Behavior Research Methods,
   # Instruments, & Computers, 33, 443-456.
-  #
-  # Parameters
-  # ----------
-  #   N: a integer denoting the size of the output vector
-  # (defaults to 100 experimental trials)
-  #
-  # Alpha: the mean boundary separation across trials  in evidence units
-  # (defaults to 1 evidence unit)
-  #
-  # Tau: the mean non-decision time across trials in seconds
-  # (defaults to .4 seconds)
-  #
-  # Nu: the mean drift rate across trials in evidence units per second
-  # (defaults to 1 evidence units per second, restricted to -5 to 5 units)
-  #
-  # Beta: the initial bias in the evidence process for choice A as a proportion of boundary Alpha
-  # (defaults to .5 or 50% of total evidence units given by Alpha)
-  #
-  # rangeTau: Non-decision time across trials is generated from a uniform
-  # distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials
-  # (defaults to 0 seconds)
-  #
-  # rangeBeta: Bias across trials is generated from a uniform distribution
-  # of Beta - rangeBeta/2 to Beta + rangeBeta/2 across trials
-  # (defaults to 0 evidence units)
-  #
-  # Eta: Standard deviation of the drift rate across trials
-  # (defaults to 3 evidence units per second, restricted to less than 3 evidence units)
-  #
-  # Varsigma: The diffusion coefficient, the standard deviation of the
-  # evidence accumulation process within one trial. It is recommended that
-  # this parameter be kept fixed unless you have reason to explore this parameter
-  # (defaults to 1 evidence unit per second)
 
   if (Nu < -5 || Nu > 5) {
     Nu <- sign(Nu) * 5
@@ -240,6 +207,18 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   return(result)
 }
 
+#' summarize MCMC output
+#'
+#' @param object rjags object
+#' @param params name of parameter
+#' @param exclude
+#' @param ISB
+#' @param exact
+#'
+#' @return
+#' @export
+#'
+#' @examples
 MCMCoutput <- function(object,
                        params = "all",
                        exclude = NULL,
@@ -373,6 +352,18 @@ MCMCoutput <- function(object,
   return(OUT)
 }
 
+#' give diagnostic from MCMC output
+#'
+#' @param object rjags object
+#' @param params
+#' @param exclude
+#' @param ISB
+#' @param exact
+#'
+#' @return
+#' @export
+#'
+#' @examples
 diagnostic <- function(object,
                        params = "all",
                        exclude = NULL,
@@ -477,6 +468,17 @@ diagnostic <- function(object,
   return(round(mcmc_summary, 4))
 }
 
+#' Plots posterior distributions in a jellyfish
+#'
+#' @param samples rjags object
+#' @param parameter a string with the parameter of interest
+#' @param reorder order the distributions? defaults False
+#' @param filename optional file location to save the plot
+#'
+#' @return
+#' @export
+#'
+#' @examples
 jellyfish <- function(samples, parameter, reorder = FALSE, filename = NULL) {
   #   Plots posterior distributions of given posterior samples in a jellyfish
   #   plot. Jellyfish plots are posterior distributions (mirrored over their
@@ -525,18 +527,18 @@ jellyfish <- function(samples, parameter, reorder = FALSE, filename = NULL) {
   # orange square (mode)
   # black circle (median)
   # cyan star (mean)
-  jellyplot <- ggplot(plt_data, aes(x = post_mean, y = subject2)) +
-    geom_segment(aes(x = post_lower2, xend = post_upper2, y = subject2, yend = subject2), color = "cyan2", size = 1) +
-    geom_segment(aes(x = post_lower1, xend = post_upper1, y = subject2, yend = subject2), color = "blue", size = 2) +
-    geom_point(aes(x = post_mode), color = "darkorange", shape = 15, size = 3) +
-    geom_point(aes(x = post_median), color = "black", shape = 16, size = 4) +
+  jellyplot <- ggplot2::ggplot(plt_data, aes(x = post_mean, y = subject2)) +
+    ggplot2::geom_segment(aes(x = post_lower2, xend = post_upper2, y = subject2, yend = subject2), color = "cyan2", size = 1) +
+    ggplot2::geom_segment(aes(x = post_lower1, xend = post_upper1, y = subject2, yend = subject2), color = "blue", size = 2) +
+    ggplot2::geom_point(aes(x = post_mode), color = "darkorange", shape = 15, size = 3) +
+    ggplot2::geom_point(aes(x = post_median), color = "black", shape = 16, size = 4) +
     ggstar::geom_star(color = "cyan2", fill = "cyan2", size = 3) +
-    labs(title = title, x = "", y = "") +
-    theme_classic()
+    ggplot2::labs(title = title, x = "", y = "") +
+    ggplot2::theme_classic()
 
   if (!is.null(filename)) {
     jellyplot
-    ggsave(filename, dpi = 300, width = 8, height = 13)
+    ggplot2::ggsave(filename, dpi = 300, width = 8, height = 13)
   }
   return(jellyplot)
 }
@@ -544,6 +546,16 @@ jellyfish <- function(samples, parameter, reorder = FALSE, filename = NULL) {
 # truevals <- genparam["delta_int"]
 # truevals <- genparam["delta"]
 
+#' Plot parameter recovery
+#'
+#' @param samples samples the rjags object
+#' @param truevals List of true parameter values (the genparam list)
+#' @param filename optional location to save plot
+#'
+#' @return ggplot of parameter recovery
+#' @export
+#'
+#' @examples
 recovery <- function(samples, truevals, filename = NULL) {
   # Plots true parameters versus 99% and 95% credible intervals of recovered
   # parameters. Also plotted are the median (circles) and mean (stars) of the posterior
@@ -576,7 +588,7 @@ recovery <- function(samples, truevals, filename = NULL) {
   # create data frame of statistics to plot
   dat <- data.frame(post_mean, post_median, post_lower1, post_upper1, post_lower2, post_upper2, paramname)
   # sort data in "correct order"
-  plt_data <- dat[mixedsort(sort(dat$paramname)), ]
+  plt_data <- dat[gtools::mixedsort(sort(dat$paramname)), ]
   # add true values to df
   if (length(as.vector(t(truevals[[1]]))) == dim(plt_data)[[1]]) {
     plt_data$truevals <- as.vector(t(truevals[[1]]))
@@ -594,18 +606,18 @@ recovery <- function(samples, truevals, filename = NULL) {
   title <- paste0("Recovery of the ", true_paramname)
 
   ## make plot using the ggplot:
-  recover_plot <- ggplot(plt_data, aes(x = truevals, y = post_mean)) +
-    geom_segment(aes(x = truevals, xend = truevals, y = post_lower2, yend = post_upper2), color = "cyan2", size = 1) +
-    geom_segment(aes(x = truevals, xend = truevals, y = post_lower1, yend = post_upper1), color = "blue", size = 2) +
-    geom_point(aes(y = post_median), color = "black", shape = 16, size = 4) +
+  recover_plot <-ggplot2::ggplot(plt_data, aes(x = truevals, y = post_mean)) +
+    ggplot2::geom_segment(aes(x = truevals, xend = truevals, y = post_lower2, yend = post_upper2), color = "cyan2", size = 1) +
+    ggplot2::geom_segment(aes(x = truevals, xend = truevals, y = post_lower1, yend = post_upper1), color = "blue", size = 2) +
+    ggplot2::geom_point(aes(y = post_median), color = "black", shape = 16, size = 4) +
     ggstar::geom_star(color = "cyan2", fill = "cyan2", size = 3) +
-    labs(title = title, x = "", y = "") +
-    theme_classic() +
-    geom_line(aes(x = recoverline, y = recoverline), color = "darkorange", size = 2)
+    ggplot2::labs(title = title, x = "", y = "") +
+    ggplot2::theme_classic() +
+    ggplot2::geom_line(aes(x = recoverline, y = recoverline), color = "darkorange", size = 2)
 
   if (!is.null(filename)) {
     recover_plot
-    ggsave(filename, dpi = 300)
+    ggplot2::ggsave(filename, dpi = 300)
   }
   return(recover_plot)
 }

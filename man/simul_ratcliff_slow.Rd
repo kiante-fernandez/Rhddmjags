@@ -43,5 +43,5 @@ simul_ratcliff_slow(
 Vector with reaction times (in seconds) multiplied by the response vector such that negative reaction times encode response B and positive reaction times  encode response A
 }
 \description{
-Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
+Ratcliff diffusion models slowly with intrinsic trial-to-trial variability in parameters
 }
