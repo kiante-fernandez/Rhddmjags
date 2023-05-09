@@ -1,11 +1,11 @@
 # Rhddmjags - Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS in R <img src="figures/hex_RHDDMJAGS.png" style="float:right; width:200px;" />
 
-#### (Repository version 0.1.0)
+#### (Repository version 0.0.0.9000)
 
 ## Prerequisites
 
 - install R and RStudio on a laptop
-- install the packages {R2jags}, {coda} from CRAN
+- install the packages {`R2jags`}, {`coda`} from CRAN
 - install JAGS
 - install JAGS Wiener module
 
@@ -46,6 +46,6 @@ Rhddmjags::example("joint")
 
 ### License
 
-Rhddmjags is licensed under the GNU General Public License v3.0 and written by Kianté Fernandez from the Neruoeconomics group at the Ohio State Univeristy.
+Rhddmjags is licensed under the GNU General Public License v3.0 and written by Kianté Fernandez from the Neruoeconomics group at The Ohio State Univeristy.
 
 

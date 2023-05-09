@@ -25,30 +25,28 @@
 # 20/07/22      Kianté Fernandez                      Recovery plot
 # 02/08/22      Kianté Fernandez                      Added Diagnostics function
 
-# Libraries
-# TODO add something to check install of packages and install them on call
-
-library(dplyr) # A Grammar of Data Manipulation, CRAN v1.0.8
-library(tidyr) # Tidy Messy Data, CRAN v1.2.0
-library(readr) # Read Rectangular Text Data, CRAN v2.1.1
-library(magrittr) # A Forward-Pipe Operator for R, CRAN v2.0.2
-library(ggplot2) # Create Elegant Data Visualisations Using the Grammar of Graphics, CRAN v3.3.5
-library(here) # A Simpler Way to Find Your Files, CRAN v1.0.1
-require(R2jags) # Bayesian Graphical Models using MCMC, CRAN v4-12. NOTE: Must have previously installed package rjags.
-library(ggstar)
-library(coda)
-library(gtools)
-
-# library(MCMCvis)
-
 Info = "Fernandez, A. K. (2022). Utility Functions for simulation, model diagnostics, and parameter recovery of Hierarchical Bayesian parameter estimation of the Drift Diffusion Model in R and jags."
 bannerBreak = "\n********************************************************************************************************\n"
 cat(paste0(bannerBreak,Info,bannerBreak,"\n"))
 
-
-### Functions ###
-
-# Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
+#' Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
+#'
+#' @param N a integer denoting the size of the output vector (defaults to 100 experimental trials)
+#' @param Alpha
+#' @param Tau
+#' @param Nu
+#' @param Beta
+#' @param rangeTau
+#' @param rangeBeta
+#' @param Eta
+#' @param Varsigma
+#' @param nsteps
+#' @param step_length
+#'
+#' @return
+#' @export
+#'
+#' @examples
 simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, rangeTau = 0, rangeBeta = 0, Eta = .3, Varsigma = 1, nsteps = 300, step_length = .01) {
   # SIMUL_RATCLIFF_SLOW  Generates data according to a drift diffusion model with optional trial-to-trial variability
   #
@@ -645,13 +643,23 @@ recovery <- function(samples, truevals, filename = NULL) {
   return(recover_plot)
 }
 
+#' RSQUARED_PRED
+#'
+#' @description Calculates R^2_prediction for data and statistics derived from data
+#' @param trueval a numeric vector
+#' @param predval a numeric vector
+#'
+#' @return a numeric
+#' @export
+#'
+#' @examples
 rsquared_pred <- function(trueval, predval) {
   # RSQUARED_PRED  Calculates R^2_prediction for data and statistics derived from data
   divisor <- sum(is.infinite(trueval)) - 1
   # Mean squared error of prediction
   MSEP <- sum((trueval - predval)^2) / divisor
   # Variance estimate of the true values
-  vartrue <- sum((trueval - mean(trueval, na.rm = T))^2) / divisor
+  vartrue <- sum((trueval - mean(trueval, na.rm = TRUE))^2) / divisor
   # R-squared definition
   rsquared <- 1 - (MSEP / vartrue)
   return(rsquared)
