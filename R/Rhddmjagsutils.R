@@ -25,9 +25,12 @@
 # 20/07/22      Kianté Fernandez                      Recovery plot
 # 02/08/22      Kianté Fernandez                      Added Diagnostics function
 
-Info = "Fernandez, A. K. (2022). Utility Functions for simulation, model diagnostics, and parameter recovery of Hierarchical Bayesian parameter estimation of the Drift Diffusion Model in R and jags."
-bannerBreak = "\n********************************************************************************************************\n"
-cat(paste0(bannerBreak,Info,bannerBreak,"\n"))
+.onAttach <- function(libname, pkgname) {
+  Info = "Fernandez, A. K. (2022). Utility Functions for simulation, model diagnostics, and parameter recovery of Hierarchical Bayesian parameter estimation of the Drift Diffusion Model in R and jags."
+  bannerBreak = "\n********************************************************************************************************\n"
+  packageStartupMessage(cat(paste0(bannerBreak,Info,bannerBreak,"\n")))
+}
+
 
 #' Simulate Ratcliff diffusion model
 #'

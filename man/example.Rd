@@ -5,8 +5,8 @@
 \title{Get an example}
 \usage{
 example(
-  name = c("regression", "nolapse", "simple", "CCP", "blocked"),
-  type = c("JAGS", "STAN"),
+  name = c("blocked", "CPP_sim", "CPP", "nolapse", "recovery", "regression", "simple"),
+  type = c(NULL, "jags", "stan"),
   filename = NULL
 )
 }
@@ -25,8 +25,8 @@ Get an example
 }
 \examples{
 \dontrun{
-example("regression", "JAGS") # get example for the regression jags
-example("nolapse", "JAGS") # get example for the nolapse stan
-example("nolapse", "STAN", "exercises/simulation_study.Rmd") # save into exercises directory
+example("regression", "jags") # get example for the regression jags
+example("nolapse", "jags") # get example for the nolapse stan
+example("nolapse", "stan", "exercises/simulation_study.Rmd") # save into exercises directory
 }
 }

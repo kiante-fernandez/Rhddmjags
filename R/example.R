@@ -9,18 +9,29 @@
 #'
 #' @examples
 #' \dontrun{
-#' example("regression", "JAGS") # get example for the regression jags
-#' example("nolapse", "JAGS") # get example for the nolapse stan
-#' example("nolapse", "STAN", "exercises/simulation_study.Rmd") # save into exercises directory
+#' example("regression", "jags") # get example for the regression jags
+#' example("nolapse", "jags") # get example for the nolapse stan
+#' example("nolapse", "stan", "exercises/simulation_study.Rmd") # save into exercises directory
 #' }
-example <- function(name = c("regression", "nolapse", "simple", "CCP", "blocked"), type = c("JAGS", "STAN"), filename = NULL) {
-  fname <- sprintf("stubs/%s-stub.Rmd", match.arg(name))
+example <- function(name = c("blocked",
+                             "CPP_sim",
+                             "CPP",
+                             "nolapse",
+                             "recovery",
+                             "regression",
+                             "simple"), type = c(NULL, "jags", "stan"), filename = NULL) {
+  if (is.null(type)) {
+    fname <- sprintf("templates/%s-example.R", match.arg(name))
+  } else {
+    fname <- sprintf("templates/%s-example-%s.R", match.arg(name), match.arg(type))
+  }
+
   f <- system.file(fname, package = "Rhddmjags")
 
   if (f == "") stop("Example ", name, " doesn't exist")
 
   if (is.null(filename)) {
-    filename <- gsub("^stubs/", "", fname)
+    filename <- gsub("^templates/", "", fname)
   }
 
   file.copy(f, filename)
