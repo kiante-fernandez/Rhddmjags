@@ -3,3 +3,4 @@
 export(example)
 export(rsquared_pred)
 export(simul_ratcliff_slow)
+export(simulratcliff)

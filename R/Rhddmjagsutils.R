@@ -29,65 +29,26 @@ Info = "Fernandez, A. K. (2022). Utility Functions for simulation, model diagnos
 bannerBreak = "\n********************************************************************************************************\n"
 cat(paste0(bannerBreak,Info,bannerBreak,"\n"))
 
-#' Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
+#' Simulate Ratcliff diffusion model
 #'
+#' @description Simulate diffusion models slowly with intrinsic trial-to-trial variability in parameters
 #' @param N a integer denoting the size of the output vector (defaults to 100 experimental trials)
-#' @param Alpha
-#' @param Tau
-#' @param Nu
-#' @param Beta
-#' @param rangeTau
-#' @param rangeBeta
-#' @param Eta
-#' @param Varsigma
+#' @param Alpha the mean boundary separation across trials  in evidence units (defaults to 1 evidence unit)
+#' @param Tau the mean non-decision time across trials in seconds (defaults to .4 seconds)
+#' @param Nu the mean drift rate across trials in evidence units per second (defaults to 1 evidence units per second, restricted to -5 to 5 units)
+#' @param Beta Beta: the initial bias in the evidence process for choice A as a proportion of boundary Alpha (defaults to .5 or 50% of total evidence units given by Alpha)
+#' @param rangeTau Non-decision time across trials is generated from a uniform distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials (defaults to 0 seconds)
+#' @param rangeBeta Bias across trials is generated from a uniform distribution of Beta - rangeBeta/2 to Beta + rangeBeta/2 across trials (defaults to 0 evidence units)
+#' @param Eta Standard deviation of the drift rate across trials (defaults to 3 evidence units per second, restricted to less than 3 evidence units)
+#' @param Varsigma The diffusion coefficient, the standard deviation of the evidence accumulation process within one trial. It is recommended that this parameter be kept fixed unless you have reason to explore this parameter (defaults to 1 evidence unit per second)
 #' @param nsteps
 #' @param step_length
 #'
-#' @return
+#' @return Vector with reaction times (in seconds) multiplied by the response vector such that negative reaction times encode response B and positive reaction times  encode response A
 #' @export
 #'
 #' @examples
 simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, rangeTau = 0, rangeBeta = 0, Eta = .3, Varsigma = 1, nsteps = 300, step_length = .01) {
-  # SIMUL_RATCLIFF_SLOW  Generates data according to a drift diffusion model with optional trial-to-trial variability
-  #
-  # Parameters
-  # ----------
-  # N: a integer denoting the size of the output vector
-  # (defaults to 100 experimental trials)
-  #
-  # Alpha: the mean boundary separation across trials  in evidence units
-  # (defaults to 1 evidence unit)
-  #
-  # Tau: the mean non-decision time across trials in seconds
-  # (defaults to .4 seconds)
-  #
-  # Nu: the mean drift rate across trials in evidence units per second
-  # (defaults to 1 evidence units per second, restricted to -5 to 5 units)
-  #
-  # Beta: the initial bias in the evidence process for choice A as a proportion of boundary Alpha
-  # (defaults to .5 or 50% of total evidence units given by Alpha)
-  #
-  # rangeTau: Non-decision time across trials is generated from a uniform
-  # distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials
-  # (defaults to 0 seconds)
-  #
-  # rangeZeta: Bias across trials is generated from a uniform distribution
-  # of Zeta - rangeZeta/2 to Zeta + rangeZeta/2 across trials
-  # (defaults to 0 evidence units)
-  #
-  # Eta: Standard deviation of the drift rate across trials
-  # (defaults to 3 evidence units per second, restricted to less than 3 evidence units)
-  #
-  # Varsigma: The diffusion coefficient, the standard deviation of the
-  # evidence accumulation process within one trial. It is recommended that
-  # this parameter be kept fixed unless you have reason to explore this parameter
-  # (defaults to 1 evidence unit per second)
-  #
-  # Returns
-  # -------
-  # Vector with reaction times (in seconds) multiplied by the response vector
-  # such that negative reaction times encode response B and positive reaction times
-  # encode response A
 
   if (Nu < -5 || Nu > 5) {
     Nu <- sign(Nu) * 5
@@ -134,10 +95,27 @@ simul_ratcliff_slow <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5,
   return(result)
 }
 
-# Simulate diffusion models quickly with intrinsic trial-to-trial variability in parameters
+#' Simulate diffusion models faster
+#'
+#' @description Generates data according to a drift diffusion model with optional trial-to-trial variability faster.
+#'  Converted from simuldiff.m MATLAB script by Joachim Vandekerckhove,
+#'  Then converted from pyhddmjags utils python script by Kianté Fernandez
+#'  See also http://ppw.kuleuven.be/okp/dmatoolbox.
+#' @param N
+#' @param Alpha
+#' @param Tau
+#' @param Nu
+#' @param Beta
+#' @param rangeTau
+#' @param rangeBeta
+#' @param Eta
+#' @param Varsigma
+#'
+#' @return Vector with reaction times (in seconds) multiplied by the response vector such that negative reaction times encode response B and positive reaction times encode response A
+#' @export
+#'
+#' @examples
 simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, rangeTau = 0, rangeBeta = 0, Eta = .3, Varsigma = 1) {
-  # SIMULRATCLIFF  Generates data according to a drift diffusion model with optional trial-to-trial variability
-  #
   #
   # Reference:
   # Tuerlinckx, F., Maris, E.,
@@ -166,8 +144,8 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   # distribution of Tau - rangeTau/2 to  Tau + rangeTau/2 across trials
   # (defaults to 0 seconds)
   #
-  # rangeZeta: Bias across trials is generated from a uniform distribution
-  # of Zeta - rangeZeta/2 to Zeta + rangeZeta/2 across trials
+  # rangeBeta: Bias across trials is generated from a uniform distribution
+  # of Beta - rangeBeta/2 to Beta + rangeBeta/2 across trials
   # (defaults to 0 evidence units)
   #
   # Eta: Standard deviation of the drift rate across trials
@@ -177,17 +155,6 @@ simulratcliff <- function(N = 100, Alpha = 1, Tau = .4, Nu = 1, Beta = .5, range
   # evidence accumulation process within one trial. It is recommended that
   # this parameter be kept fixed unless you have reason to explore this parameter
   # (defaults to 1 evidence unit per second)
-  #
-  # Returns
-  # -------
-  # Vector with reaction times (in seconds) multiplied by the response vector
-  # such that negative reaction times encode response B and positive reaction times
-  # encode response A
-  #
-  #
-  # Converted from simuldiff.m MATLAB script by Joachim Vandekerckhove,
-  # Then converted from pyhddmjags utils python  script by Kianté Fernandez
-  # See also http://ppw.kuleuven.be/okp/dmatoolbox.
 
   if (Nu < -5 || Nu > 5) {
     Nu <- sign(Nu) * 5
