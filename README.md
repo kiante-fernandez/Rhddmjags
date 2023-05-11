@@ -1,6 +1,6 @@
 # Rhddmjags - Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS in R <img src="figures/hex_RHDDMJAGS.png" style="float:right; width:200px;" />
 
-#### (Repository version 0.0.0.9000)
+#### (Repository version 0.0.0.9001)
 
 ## Prerequisites
 
@@ -28,9 +28,8 @@ The script nolapse_test_Rstan.R contains Rstan and Stan code to find and recover
 Then you can load examples with the following code:
 
 ``` r
-Rhddmjags::example("nolapse")
-Rhddmjags::example("regression")
-Rhddmjags::example("joint")
+Rhddmjags::example("simple", "jags")
+Rhddmjags::example("nolapse","stan")
 ```
 
 ## Resources
