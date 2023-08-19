@@ -1,6 +1,6 @@
 # Rhddmjags - Repository for example Hierarchical Drift Diffusion Model (HDDM) code using JAGS in R <img src="figures/hex_RHDDMJAGS.png" style="float:right; width:200px;" />
 
-#### (Repository version 0.0.0.9001)
+#### (Repository version 0.0.0.9002)
 
 ## Prerequisites
 
@@ -43,8 +43,11 @@ Rhddmjags::example("nolapse","stan")
 
 - 
 
+### Possible citation
+Nunez, M. D., Fernandez, K., Vandekerckhove, J., & Srinivasan, R. (2023). [A tutorial on fitting joint models of M/EEG and behavior to understand cognition.](https://psyarxiv.com/vf6t5) PsyArXiv. https://doi.org/10.31234/osf.io/vf6t5
+
 ### License
 
-Rhddmjags is licensed under the GNU General Public License v3.0 and written by Kianté Fernandez from the Neruoeconomics group at The Ohio State Univeristy.
+Rhddmjags is licensed under the GNU General Public License v3.0 and written by Kianté Fernandez from the Neruoeconomics group at University of California, Los Angeles.
 
 
