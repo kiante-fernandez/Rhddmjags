@@ -43,8 +43,8 @@ Rhddmjags::example("nolapse","stan")
 
 - 
 
-### Possible citation
-Nunez, M. D., Fernandez, K., Vandekerckhove, J., & Srinivasan, R. (2023). [A tutorial on fitting joint models of M/EEG and behavior to understand cognition.](https://psyarxiv.com/vf6t5) PsyArXiv. https://doi.org/10.31234/osf.io/vf6t5
+### citation
+Nunez, M.D., Fernandez, K., Srinivasan, R. et al. A tutorial on fitting joint models of M/EEG and behavior to understand cognition. Behav Res (2024). https://doi.org/10.3758/s13428-023-02331-x
 
 ### License
 
